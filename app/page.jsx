@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -111,8 +112,16 @@ function NavDropdown({ label }) {
 export default function Home() {
   const heroRef = useRef(null);
   const { scrollY } = useScroll();
-  // Parallax: image moves up at 0.5x scroll speed
+  // Parallax: hero image moves up at 0.5x scroll speed
   const imgY = useTransform(scrollY, [0, 800], [0, -400]);
+
+  // CTA section parallax
+  const ctaRef = useRef(null);
+  const { scrollYProgress: ctaProgress } = useScroll({
+    target: ctaRef,
+    offset: ["start end", "end start"],
+  });
+  const ctaBgY = useTransform(ctaProgress, [0, 1], ["-8%", "8%"]);
 
   return (
     <main className="min-h-screen bg-[#05070f] text-[#e8e4dc] overflow-x-hidden" style={{ fontFamily: "var(--font-sans)" }}>
@@ -406,38 +415,111 @@ export default function Home() {
       </section>
 
       {/* ══ FINAL CTA ═════════════════════════════════════════════════════════ */}
-      <section id="early-access" className="relative px-6 py-40 text-center overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-blue-900/15 blur-[120px]" />
+      <section
+        id="early-access"
+        ref={ctaRef}
+        className="relative min-h-screen flex items-center justify-center text-center px-6"
+      >
+        {/* Bridge background — overflow-hidden here, not on section, so no clipping artifacts */}
+        <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+          {/* Ken Burns + parallax wrapper */}
+          <motion.div
+            className="absolute inset-0"
+            style={{ y: ctaBgY }}
+            animate={{ scale: [1, 1.08] }}
+            transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+          >
+            <Image
+              src="/bridge.webp"
+              alt=""
+              fill
+              style={{ objectFit: "cover", objectPosition: "center 60%" }}
+              priority={false}
+            />
+          </motion.div>
+
+          {/* Edge-to-edge overlays — no gaps */}
+          {/* Top fade so section blends into the section above it */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#05070f] to-transparent" />
+          {/* Main cinematic overlay with warm amber tint at edges */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50" />
+          <div className="absolute inset-0 bg-amber-900/15" />
+          {/* Radial vignette darkening centre-bottom where text sits */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 50% at 50% 80%, rgba(0,0,0,0.65) 0%, transparent 100%)",
+            }}
+          />
+          {/* Bottom fade into footer */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#05070f] to-transparent" />
         </div>
 
-        <motion.div {...fadeUp} className="relative z-10 max-w-2xl mx-auto">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-6">Early Access</p>
-          <h2
+        {/* Content */}
+        <div className="relative z-10 max-w-2xl mx-auto py-32">
+          {/* Shimmering label */}
+          <motion.p
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="text-xs tracking-[0.3em] uppercase text-white/60 mb-6"
+          >
+            Early Access
+          </motion.p>
+
+          {/* Headline fade-up on scroll */}
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1, ease: "easeOut" }}
             className="text-5xl md:text-6xl font-normal text-[#f0ece4] mb-6 leading-tight"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             Get Early Access
-          </h2>
-          <p className="text-[#4a4840] text-base mb-12 leading-relaxed">
-            Be first to try Afim. Free during early access.
-          </p>
-          <motion.a
-            href="#"
-            whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center gap-2 bg-white text-[#05070f] text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors"
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.15 }}
+            className="text-white/45 text-base mb-12 leading-relaxed"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M8 12l4-4 4 4M12 8v8" />
-            </svg>
-            Add to Chrome
-          </motion.a>
-        </motion.div>
+            Be first to try Afim. Free during early access.
+          </motion.p>
+
+          {/* Button with glow pulse */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.25 }}
+            className="inline-block relative"
+          >
+            {/* Glow ring behind button */}
+            <motion.div
+              className="absolute inset-0 rounded-full bg-white/20 blur-md"
+              animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.15, 1] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.a
+              href="#"
+              whileHover={{ scale: 1.05 }}
+              className="relative inline-flex items-center gap-2 bg-white text-[#05070f] text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12l4-4 4 4M12 8v8" />
+              </svg>
+              Add to Chrome
+            </motion.a>
+          </motion.div>
+        </div>
       </section>
 
       {/* ══ FOOTER ════════════════════════════════════════════════════════════ */}
-      <footer className="px-8 md:px-14 py-8 border-t border-[#0f1120] flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer className="px-8 md:px-14 py-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
         <span className="text-sm tracking-widest uppercase text-[#2a2e40]" style={{ fontFamily: "var(--font-serif)" }}>
           Afim
         </span>
