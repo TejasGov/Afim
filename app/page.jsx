@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useInView } from "framer-motion";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -104,6 +104,364 @@ function NavDropdown({ label }) {
         <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     </button>
+  );
+}
+
+// ── HOW IT WORKS — COMPONENTS ────────────────────────────────────────────────
+
+const GRAPH_NODES = [
+  { x: 80,  y: 88,  r: 10, fill: "rgba(96,165,250,0.65)",  delay: 0   },
+  { x: 140, y: 55,  r: 7,  fill: "rgba(147,197,253,0.45)", delay: 0.4 },
+  { x: 140, y: 121, r: 7,  fill: "rgba(167,139,250,0.45)", delay: 0.8 },
+  { x: 210, y: 40,  r: 5,  fill: "rgba(255,255,255,0.22)", delay: 1.2 },
+  { x: 210, y: 88,  r: 8,  fill: "rgba(96,165,250,0.55)",  delay: 0.6 },
+  { x: 210, y: 136, r: 5,  fill: "rgba(255,255,255,0.22)", delay: 1.0 },
+];
+const GRAPH_LINES = [[0,1],[0,2],[1,3],[1,4],[2,4],[2,5]];
+
+// Single animated node — owns its own spring physics
+function GraphNode({ node, mousePos }) {
+  const ox = useMotionValue(0);
+  const oy = useMotionValue(0);
+  const sx = useSpring(ox, { stiffness: 90, damping: 18 });
+  const sy = useSpring(oy, { stiffness: 90, damping: 18 });
+
+  useEffect(() => {
+    if (!mousePos) { ox.set(0); oy.set(0); return; }
+    const dx = node.x - mousePos.x;
+    const dy = node.y - mousePos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 65 && dist > 0) {
+      const force = (1 - dist / 65) * 24;
+      ox.set((dx / dist) * force);
+      oy.set((dy / dist) * force);
+    } else {
+      ox.set(0);
+      oy.set(0);
+    }
+  }, [mousePos, node, ox, oy]);
+
+  return (
+    <motion.circle
+      cx={node.x}
+      cy={node.y}
+      r={node.r}
+      fill={node.fill}
+      style={{ x: sx, y: sy }}
+      animate={{ opacity: [0.45, 1, 0.45] }}
+      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: node.delay }}
+    />
+  );
+}
+
+// Interactive node-graph mockup
+function NodeGraph() {
+  const svgRef = useRef(null);
+  const [mousePos, setMousePos] = useState(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMousePos({
+      x: ((e.clientX - rect.left) / rect.width) * 320,
+      y: ((e.clientY - rect.top) / rect.height) * 176,
+    });
+  }, []);
+
+  return (
+    <div className="relative h-48 rounded-2xl bg-white/[0.025] border border-white/5 overflow-hidden cursor-crosshair">
+      <svg
+        ref={svgRef}
+        viewBox="0 0 320 176"
+        className="absolute inset-0 w-full h-full"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setMousePos(null)}
+      >
+        {/* Static guide lines — barely visible, organic when nodes drift */}
+        {GRAPH_LINES.map(([a, b]) => (
+          <line
+            key={`${a}-${b}`}
+            x1={GRAPH_NODES[a].x} y1={GRAPH_NODES[a].y}
+            x2={GRAPH_NODES[b].x} y2={GRAPH_NODES[b].y}
+            stroke="rgba(255,255,255,0.07)"
+            strokeWidth="1"
+          />
+        ))}
+        {GRAPH_NODES.map((node, i) => (
+          <GraphNode key={i} node={node} mousePos={mousePos} />
+        ))}
+      </svg>
+      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15 pointer-events-none select-none">
+        Live graph
+      </span>
+    </div>
+  );
+}
+
+const DEC_ENTRIES = [
+  { w: "72%", dot: "bg-amber-400",  label: "Context window exceeded",   delay: 0    },
+  { w: "55%", dot: "bg-blue-400",   label: "Summary generated",          delay: 0.12 },
+  { w: "82%", dot: "bg-violet-400", label: "Decision captured",           delay: 0.24 },
+  { w: "45%", dot: "bg-amber-300",  label: "Agent consensus reached",    delay: 0.36 },
+];
+
+// Interactive decision-log mockup — bars fill to 100% on card hover
+function DecisionLog() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative h-48 rounded-2xl bg-white/[0.025] border border-white/5 overflow-hidden flex flex-col justify-center gap-[14px] px-6 cursor-default"
+    >
+      {DEC_ENTRIES.map(({ w, dot, label, delay: d }, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <motion.span
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: d }}
+          />
+          <div className="flex-1 h-[5px] rounded-full bg-white/[0.06] overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-white/28 to-white/8"
+              animate={{ width: !inView ? "0%" : hovered ? "100%" : w }}
+              transition={{
+                duration: hovered ? 0.65 : 0.9,
+                ease: "easeOut",
+                delay: hovered ? d * 0.7 : 0.35 + d,
+              }}
+            />
+          </div>
+          <span className="text-[9px] text-white/15 tracking-wide shrink-0 w-28 truncate">{label}</span>
+        </div>
+      ))}
+      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15 pointer-events-none select-none">
+        Decision log
+      </span>
+    </div>
+  );
+}
+
+// 3D-tilt card wrapper
+function TiltCard({ children, className, glowColor = "rgba(96,130,255,0.35)", ...motionProps }) {
+  const ref = useRef(null);
+  const rotX = useMotionValue(0);
+  const rotY = useMotionValue(0);
+  const sRotX = useSpring(rotX, { stiffness: 220, damping: 28 });
+  const sRotY = useSpring(rotY, { stiffness: 220, damping: 28 });
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    rotY.set(((e.clientX - rect.left) / rect.width - 0.5) * 16);
+    rotX.set(((e.clientY - rect.top) / rect.height - 0.5) * -16);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => { rotX.set(0); rotY.set(0); }}
+      whileHover={{ y: -6, borderColor: glowColor }}
+      style={{ rotateX: sRotX, rotateY: sRotY, transformPerspective: 1200, willChange: "transform" }}
+      className={className}
+      {...motionProps}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Full "Two layers. Total clarity." section with cursor glow + magnetic headlines
+function HowItWorksSection() {
+  const sectionRef = useRef(null);
+  const [isOver, setIsOver] = useState(false);
+
+  // Section-wide cursor tracking (raw)
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+
+  // Spring-lagged glow position (stiffness 50 = organic lag)
+  const glowX = useSpring(rawX, { stiffness: 50, damping: 20 });
+  const glowY = useSpring(rawY, { stiffness: 50, damping: 20 });
+
+  // Magnetic headline offsets — tighter spring, subtle range
+  const hm1X = useSpring(useMotionValue(0), { stiffness: 80, damping: 30 });
+  const hm1Y = useSpring(useMotionValue(0), { stiffness: 80, damping: 30 });
+  const hm2X = useSpring(useMotionValue(0), { stiffness: 80, damping: 30 });
+  const hm2Y = useSpring(useMotionValue(0), { stiffness: 80, damping: 30 });
+  // Keep stable refs to the underlying raw motion values so we can .set() in the handler
+  const hm1XRaw = useRef(useMotionValue(0));
+  const hm1YRaw = useRef(useMotionValue(0));
+  const hm2XRaw = useRef(useMotionValue(0));
+  const hm2YRaw = useRef(useMotionValue(0));
+  const shm1X = useSpring(hm1XRaw.current, { stiffness: 80, damping: 30 });
+  const shm1Y = useSpring(hm1YRaw.current, { stiffness: 80, damping: 30 });
+  const shm2X = useSpring(hm2XRaw.current, { stiffness: 80, damping: 30 });
+  const shm2Y = useSpring(hm2YRaw.current, { stiffness: 80, damping: 30 });
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    rawX.set(x);
+    rawY.set(y);
+    // Magnetic: map cursor to ±2px / ±1px shifts
+    const nx = (x / rect.width - 0.5) * 4;
+    const ny = (y / rect.height - 0.5) * 2;
+    hm1XRaw.current.set(nx);
+    hm1YRaw.current.set(ny);
+    hm2XRaw.current.set(nx * 0.7);
+    hm2YRaw.current.set(ny * 0.7);
+  }, [rawX, rawY]);
+
+  return (
+    <section
+      id="product"
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsOver(true)}
+      onMouseLeave={() => setIsOver(false)}
+      className="relative px-6 md:px-14 py-32 max-w-6xl mx-auto overflow-hidden"
+    >
+      {/* Cursor-following radial glow */}
+      <motion.div
+        aria-hidden="true"
+        animate={{ opacity: isOver ? 1 : 0 }}
+        transition={{ duration: 0.4 }}
+        style={{
+          position: "absolute",
+          left: -250,
+          top: -250,
+          x: glowX,
+          y: glowY,
+          width: 500,
+          height: 500,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(80,100,255,0.10) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── HEADER ── */}
+      <div className="relative z-10 mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="flex items-center gap-2 mb-6"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70" />
+          <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">How it works</p>
+        </motion.div>
+
+        {/* Magnetic headline line 1 */}
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.05 }}
+          style={{ x: shm1X, y: shm1Y, willChange: "transform", fontFamily: "var(--font-serif)" }}
+          className="text-5xl md:text-6xl font-normal text-[#f0ece4] leading-[1.08] tracking-tight max-w-xl"
+        >
+          Two layers.
+        </motion.p>
+        {/* Magnetic headline line 2 */}
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.18 }}
+          style={{ x: shm2X, y: shm2Y, willChange: "transform", fontFamily: "var(--font-serif)" }}
+          className="text-5xl md:text-6xl font-normal text-white/35 leading-[1.08] tracking-tight max-w-xl mb-6"
+        >
+          Total clarity.
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
+          className="text-white/35 text-base md:text-lg leading-relaxed max-w-xl"
+        >
+          Afim captures what was said, and what was decided — two layers of context that compound over time.
+        </motion.p>
+      </div>
+
+      {/* ── CARDS ── */}
+      <div className="relative z-10 grid md:grid-cols-2 gap-6">
+
+        {/* Conversation Graph card */}
+        <TiltCard
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+          glowColor="rgba(96,130,255,0.35)"
+          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
+        >
+          {/* Ambient glow */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-600/8 blur-3xl pointer-events-none" />
+
+          <NodeGraph />
+
+          <div className="relative z-10">
+            <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-blue-400/60 border border-blue-500/15 px-3 py-1 rounded-full mb-4">
+              Conversation Graph
+            </span>
+            <h3
+              className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              The full record of every AI conversation.
+            </h3>
+            <p className="text-sm text-white/25 leading-relaxed">
+              Every message, decision, and change — organized into entities, timelines, and dependencies. Nothing falls through the cracks.
+            </p>
+          </div>
+        </TiltCard>
+
+        {/* Decision Manual card */}
+        <TiltCard
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          glowColor="rgba(255,180,80,0.25)"
+          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
+        >
+          {/* Ambient glow */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-600/7 blur-3xl pointer-events-none" />
+
+          <DecisionLog />
+
+          <div className="relative z-10">
+            <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-amber-400/60 border border-amber-500/15 px-3 py-1 rounded-full mb-4">
+              Decision Manual
+            </span>
+            <h3
+              className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              The evolving understanding of what the AI decided.
+            </h3>
+            <p className="text-sm text-white/25 leading-relaxed">
+              Your priorities, open loops, and context — captured automatically as you chat. Always up to date, always yours.
+            </p>
+          </div>
+        </TiltCard>
+
+      </div>
+    </section>
   );
 }
 
@@ -317,185 +675,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS — 2 BIG CARDS ════════════════════════════════════════ */}
-      <section id="product" className="relative px-6 md:px-14 py-32 max-w-6xl mx-auto">
-
-        {/* Header */}
-        <div className="mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="flex items-center gap-2 mb-6"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70" />
-            <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">How it works</p>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.05 }}
-            className="text-5xl md:text-6xl font-normal text-[#f0ece4] leading-[1.08] tracking-tight max-w-xl"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Two layers.
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.18 }}
-            className="text-5xl md:text-6xl font-normal text-white/40 leading-[1.08] tracking-tight max-w-xl mb-6"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Total clarity.
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
-            className="text-white/35 text-base md:text-lg leading-relaxed max-w-xl"
-          >
-            Afim captures what was said, and what was decided — two layers of context that compound over time.
-          </motion.p>
-        </div>
-
-        {/* Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-
-          {/* ── CARD 1: Conversation Graph ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-            whileHover={{ y: -5, borderColor: "rgba(96,130,255,0.35)" }}
-            className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8 group"
-          >
-            {/* Ambient glow */}
-            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-blue-600/8 blur-3xl pointer-events-none" />
-
-            {/* Node graph mockup */}
-            <div className="relative h-44 rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden flex items-center justify-center">
-              {/* Connecting lines (SVG) */}
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 176" fill="none">
-                <line x1="80"  y1="88"  x2="140" y2="55"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <line x1="80"  y1="88"  x2="140" y2="121" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <line x1="140" y1="55"  x2="210" y2="40"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <line x1="140" y1="55"  x2="210" y2="88"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <line x1="140" y1="121" x2="210" y2="88"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                <line x1="140" y1="121" x2="210" y2="136" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-              </svg>
-              {/* Nodes */}
-              {[
-                { cx: 80,  cy: 88,  r: 10, color: "bg-blue-400/60",   delay: 0 },
-                { cx: 140, cy: 55,  r: 7,  color: "bg-blue-300/40",   delay: 0.4 },
-                { cx: 140, cy: 121, r: 7,  color: "bg-violet-400/40", delay: 0.8 },
-                { cx: 210, cy: 40,  r: 5,  color: "bg-white/20",      delay: 1.2 },
-                { cx: 210, cy: 88,  r: 8,  color: "bg-blue-400/50",   delay: 0.6 },
-                { cx: 210, cy: 136, r: 5,  color: "bg-white/20",      delay: 1.0 },
-              ].map(({ cx, cy, r, color, delay: d }, i) => (
-                <motion.div
-                  key={i}
-                  animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.15, 1] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: d }}
-                  className={`absolute rounded-full ${color}`}
-                  style={{ left: cx - r, top: cy - r, width: r * 2, height: r * 2 }}
-                />
-              ))}
-              {/* Label */}
-              <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15">
-                Live graph
-              </span>
-            </div>
-
-            {/* Text */}
-            <div>
-              <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-blue-400/60 border border-blue-500/15 px-3 py-1 rounded-full mb-4">
-                Conversation Graph
-              </span>
-              <h3
-                className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                The full record of every AI conversation.
-              </h3>
-              <p className="text-sm text-white/25 leading-relaxed">
-                Every message, decision, and change — organized into entities, timelines, and dependencies. Nothing falls through the cracks.
-              </p>
-            </div>
-          </motion.div>
-
-          {/* ── CARD 2: Decision Manual ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            whileHover={{ y: -5, borderColor: "rgba(255,180,80,0.25)" }}
-            className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8 group"
-          >
-            {/* Ambient glow */}
-            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-amber-600/6 blur-3xl pointer-events-none" />
-
-            {/* Timeline mockup */}
-            <div className="relative h-44 rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden flex flex-col justify-center gap-3 px-6">
-              {[
-                { w: "72%", dot: "bg-amber-400",  label: "Context window exceeded",   delay: 0 },
-                { w: "55%", dot: "bg-blue-400",   label: "Summary generated",         delay: 0.15 },
-                { w: "82%", dot: "bg-violet-400", label: "Decision captured",          delay: 0.3 },
-                { w: "45%", dot: "bg-amber-300",  label: "Agent consensus reached",   delay: 0.45 },
-              ].map(({ w, dot, label, delay: d }, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 + d }}
-                  className="flex items-center gap-3"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-                  <div className="flex-1 h-[5px] rounded-full bg-white/8 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: w }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.9, ease: "easeOut", delay: 0.6 + d }}
-                      className="h-full rounded-full bg-gradient-to-r from-white/20 to-white/8"
-                    />
-                  </div>
-                  <span className="text-[9px] text-white/15 tracking-wide shrink-0 w-32 truncate">{label}</span>
-                </motion.div>
-              ))}
-              <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15">
-                Decision log
-              </span>
-            </div>
-
-            {/* Text */}
-            <div>
-              <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-amber-400/60 border border-amber-500/15 px-3 py-1 rounded-full mb-4">
-                Decision Manual
-              </span>
-              <h3
-                className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                The evolving understanding of what the AI decided.
-              </h3>
-              <p className="text-sm text-white/25 leading-relaxed">
-                Your priorities, open loops, and context — captured automatically as you chat. Always up to date, always yours.
-              </p>
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
+      {/* ══ HOW IT WORKS ══════════════════════════════════════════════════════ */}
+      <HowItWorksSection />
 
       {/* ══ 3 SMALL FEATURE CARDS ═════════════════════════════════════════════ */}
       <section className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
