@@ -110,12 +110,12 @@ function NavDropdown({ label }) {
 // ── HOW IT WORKS — COMPONENTS ────────────────────────────────────────────────
 
 const GRAPH_NODES = [
-  { x: 80,  y: 88,  r: 10, fill: "rgba(96,165,250,0.65)",  delay: 0   },
-  { x: 140, y: 55,  r: 7,  fill: "rgba(147,197,253,0.45)", delay: 0.4 },
-  { x: 140, y: 121, r: 7,  fill: "rgba(167,139,250,0.45)", delay: 0.8 },
-  { x: 210, y: 40,  r: 5,  fill: "rgba(255,255,255,0.22)", delay: 1.2 },
-  { x: 210, y: 88,  r: 8,  fill: "rgba(96,165,250,0.55)",  delay: 0.6 },
-  { x: 210, y: 136, r: 5,  fill: "rgba(255,255,255,0.22)", delay: 1.0 },
+  { x: 80,  y: 88,  r: 4, fill: "rgba(255,255,255,0.80)", delay: 0   },
+  { x: 140, y: 55,  r: 3, fill: "rgba(255,255,255,0.60)", delay: 0.4 },
+  { x: 140, y: 121, r: 3, fill: "rgba(255,255,255,0.55)", delay: 0.8 },
+  { x: 210, y: 40,  r: 2, fill: "rgba(255,255,255,0.40)", delay: 1.2 },
+  { x: 210, y: 88,  r: 3, fill: "rgba(255,255,255,0.65)", delay: 0.6 },
+  { x: 210, y: 136, r: 2, fill: "rgba(255,255,255,0.40)", delay: 1.0 },
 ];
 const GRAPH_LINES = [[0,1],[0,2],[1,3],[1,4],[2,4],[2,5]];
 
@@ -147,8 +147,9 @@ function GraphNode({ node, mousePos }) {
       cy={node.y}
       r={node.r}
       fill={node.fill}
+      filter="url(#node-glow)"
       style={{ x: sx, y: sy }}
-      animate={{ opacity: [0.45, 1, 0.45] }}
+      animate={{ opacity: [0.5, 1, 0.5] }}
       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: node.delay }}
     />
   );
@@ -169,7 +170,7 @@ function NodeGraph() {
   }, []);
 
   return (
-    <div className="relative h-48 rounded-2xl bg-white/[0.025] border border-white/5 overflow-hidden cursor-crosshair">
+    <div className="relative h-48 rounded-2xl bg-white/[0.02] border border-white/[0.06] overflow-hidden cursor-crosshair">
       <svg
         ref={svgRef}
         viewBox="0 0 320 176"
@@ -177,21 +178,31 @@ function NodeGraph() {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePos(null)}
       >
-        {/* Static guide lines — barely visible, organic when nodes drift */}
+        {/* Thin white guide lines */}
         {GRAPH_LINES.map(([a, b]) => (
           <line
             key={`${a}-${b}`}
             x1={GRAPH_NODES[a].x} y1={GRAPH_NODES[a].y}
             x2={GRAPH_NODES[b].x} y2={GRAPH_NODES[b].y}
-            stroke="rgba(255,255,255,0.07)"
-            strokeWidth="1"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth="0.75"
           />
         ))}
+        {/* White nodes with subtle glow filter */}
+        <defs>
+          <filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         {GRAPH_NODES.map((node, i) => (
           <GraphNode key={i} node={node} mousePos={mousePos} />
         ))}
       </svg>
-      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15 pointer-events-none select-none">
+      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/20 pointer-events-none select-none" style={{ fontFamily: "var(--font-sans)" }}>
         Live graph
       </span>
     </div>
@@ -199,10 +210,10 @@ function NodeGraph() {
 }
 
 const DEC_ENTRIES = [
-  { w: "72%", dot: "bg-amber-400",  label: "Context window exceeded",   delay: 0    },
-  { w: "55%", dot: "bg-blue-400",   label: "Summary generated",          delay: 0.12 },
-  { w: "82%", dot: "bg-violet-400", label: "Decision captured",           delay: 0.24 },
-  { w: "45%", dot: "bg-amber-300",  label: "Agent consensus reached",    delay: 0.36 },
+  { w: "72%", opacity: "bg-white/70", label: "Context window exceeded",  delay: 0    },
+  { w: "55%", opacity: "bg-white/50", label: "Summary generated",         delay: 0.12 },
+  { w: "82%", opacity: "bg-white/60", label: "Decision captured",          delay: 0.24 },
+  { w: "45%", opacity: "bg-white/40", label: "Agent consensus reached",   delay: 0.36 },
 ];
 
 // Interactive decision-log mockup — bars fill to 100% on card hover
@@ -216,30 +227,42 @@ function DecisionLog() {
       ref={ref}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="relative h-48 rounded-2xl bg-white/[0.025] border border-white/5 overflow-hidden flex flex-col justify-center gap-[14px] px-6 cursor-default"
+      className="relative h-48 rounded-2xl bg-white/[0.02] border border-white/[0.06] overflow-hidden flex flex-col justify-center cursor-default px-7"
     >
-      {DEC_ENTRIES.map(({ w, dot, label, delay: d }, i) => (
-        <div key={i} className="flex items-center gap-3">
-          <motion.span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: d }}
-          />
-          <div className="flex-1 h-[5px] rounded-full bg-white/[0.06] overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-white/28 to-white/8"
-              animate={{ width: !inView ? "0%" : hovered ? "100%" : w }}
-              transition={{
-                duration: hovered ? 0.65 : 0.9,
-                ease: "easeOut",
-                delay: hovered ? d * 0.7 : 0.35 + d,
-              }}
+      {/* Vertical timeline spine */}
+      <div className="absolute left-[29px] top-[28px] bottom-[28px] w-px bg-white/[0.08]" />
+
+      <div className="flex flex-col gap-[18px]">
+        {DEC_ENTRIES.map(({ w, opacity, label, delay: d }, i) => (
+          <div key={i} className="flex items-center gap-4">
+            {/* Dot sits on top of the spine */}
+            <motion.span
+              className={`w-[5px] h-[5px] rounded-full shrink-0 relative z-10 ${opacity}`}
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: d }}
             />
+            <div className="flex-1 h-[1.5px] rounded-full bg-white/[0.08] overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-white/60"
+                animate={{ width: !inView ? "0%" : hovered ? "100%" : w }}
+                transition={{
+                  duration: hovered ? 0.65 : 0.9,
+                  ease: "easeOut",
+                  delay: hovered ? d * 0.7 : 0.35 + d,
+                }}
+              />
+            </div>
+            <span
+              className="text-[10px] text-white/35 shrink-0 w-32 truncate"
+              style={{ fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}
+            >
+              {label}
+            </span>
           </div>
-          <span className="text-[9px] text-white/15 tracking-wide shrink-0 w-28 truncate">{label}</span>
-        </div>
-      ))}
-      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15 pointer-events-none select-none">
+        ))}
+      </div>
+
+      <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/20 pointer-events-none select-none" style={{ fontFamily: "var(--font-sans)" }}>
         Decision log
       </span>
     </div>
@@ -406,16 +429,16 @@ function HowItWorksSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-          glowColor="rgba(96,130,255,0.35)"
-          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
+          glowColor="rgba(255,255,255,0.15)"
+          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
         >
-          {/* Ambient glow */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-600/8 blur-3xl pointer-events-none" />
+          {/* Neutral ambient glow */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
 
           <NodeGraph />
 
           <div className="relative z-10">
-            <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-blue-400/60 border border-blue-500/15 px-3 py-1 rounded-full mb-4">
+            <span className="inline-block text-[10px] tracking-widest uppercase text-white/60 bg-white/5 border border-white/10 px-3 py-1 rounded-full mb-4">
               Conversation Graph
             </span>
             <h3
@@ -424,7 +447,7 @@ function HowItWorksSection() {
             >
               The full record of every AI conversation.
             </h3>
-            <p className="text-sm text-white/25 leading-relaxed">
+            <p className="text-sm text-white/30 leading-relaxed">
               Every message, decision, and change — organized into entities, timelines, and dependencies. Nothing falls through the cracks.
             </p>
           </div>
@@ -436,16 +459,16 @@ function HowItWorksSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          glowColor="rgba(255,180,80,0.25)"
-          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
+          glowColor="rgba(255,255,255,0.15)"
+          className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/10 rounded-3xl p-8 flex flex-col gap-8"
         >
-          {/* Ambient glow */}
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-600/7 blur-3xl pointer-events-none" />
+          {/* Neutral ambient glow */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
 
           <DecisionLog />
 
           <div className="relative z-10">
-            <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-amber-400/60 border border-amber-500/15 px-3 py-1 rounded-full mb-4">
+            <span className="inline-block text-[10px] tracking-widest uppercase text-white/60 bg-white/5 border border-white/10 px-3 py-1 rounded-full mb-4">
               Decision Manual
             </span>
             <h3
@@ -454,7 +477,7 @@ function HowItWorksSection() {
             >
               The evolving understanding of what the AI decided.
             </h3>
-            <p className="text-sm text-white/25 leading-relaxed">
+            <p className="text-sm text-white/30 leading-relaxed">
               Your priorities, open loops, and context — captured automatically as you chat. Always up to date, always yours.
             </p>
           </div>
