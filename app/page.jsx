@@ -9,10 +9,10 @@ import { motion, useScroll, useTransform } from "framer-motion";
 const TRUSTED_BY = ["POSTMAN", "RIO", "DOORDASH", "CAPITAL.COM", "AFRIEX"];
 
 const PLATFORM_LINKS = [
-  { icon: "🌐", label: "Chrome" },
-  { icon: "💬", label: "iMessage" },
-  { icon: "#", label: "Slack" },
-  { icon: "🖥", label: "Desktop", soon: true },
+  { icon: "🌐", label: "Chrome",   status: "Live",        dot: "bg-green-400",  delay: 0 },
+  { icon: "💬", label: "iMessage", status: "Live",        dot: "bg-green-400",  delay: 0.1 },
+  { icon: "#",  label: "Slack",    status: "Live",        dot: "bg-green-400",  delay: 0.2 },
+  { icon: "🖥", label: "Desktop",  status: "Coming soon", dot: "bg-amber-400",  delay: 0.3, soon: true },
 ];
 
 const BIG_CARDS = [
@@ -243,31 +243,79 @@ export default function Home() {
       </section>
 
       {/* ══ PLATFORM STRIP ════════════════════════════════════════════════════ */}
-      <motion.section {...fadeUp} className="px-6 md:px-14 py-24 max-w-5xl mx-auto text-center">
-        <h2
-          className="text-4xl md:text-5xl font-normal text-[#f0ece4] leading-snug mb-14 max-w-2xl mx-auto"
-          style={{ fontFamily: "var(--font-serif)" }}
-        >
-          Browser-first. Where all your work already lives.
-        </h2>
-
-        <div className="flex flex-wrap justify-center gap-4">
-          {PLATFORM_LINKS.map(({ icon, label, soon }) => (
-            <div
-              key={label}
-              className="flex items-center gap-2.5 border border-[#1a1e30] bg-[#08091a] px-6 py-3 rounded-full text-sm text-[#9d9a93]"
-            >
-              <span>{icon}</span>
-              <span>{label}</span>
-              {soon && (
-                <span className="text-[9px] tracking-wider uppercase border border-[#2a3050] text-[#4a5878] px-1.5 py-0.5 rounded-full">
-                  Soon
-                </span>
-              )}
-            </div>
-          ))}
+      <section className="relative py-40 px-6 md:px-14 text-center overflow-hidden">
+        {/* Atmospheric nebula glow */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-blue-700/10 blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[250px] rounded-full bg-violet-700/8 blur-[80px]" />
         </div>
-      </motion.section>
+
+        <div className="relative z-10 max-w-4xl mx-auto">
+          {/* Label */}
+          <motion.p
+            {...fadeUp}
+            className="text-[10px] tracking-[0.35em] uppercase text-white/40 mb-6"
+          >
+            Where Afim Works
+          </motion.p>
+
+          {/* Headline — two-line dramatic break, word-staggered */}
+          <div className="mb-6 overflow-hidden">
+            <motion.h2
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+              className="text-5xl md:text-6xl lg:text-7xl font-normal text-[#f0ece4] leading-[1.08] tracking-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Browser-first.
+              <br />
+              Where all your work already lives.
+            </motion.h2>
+          </div>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
+            className="text-white/35 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-20"
+          >
+            Afim captures every AI conversation you have, across the tools you already use.
+          </motion.p>
+
+          {/* Platform glass cards */}
+          <div className="flex flex-wrap justify-center gap-5">
+            {PLATFORM_LINKS.map(({ icon, label, status, dot, delay }) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.7, ease: "easeOut", delay }}
+                whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.2)" }}
+                className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl px-8 py-7 w-36 cursor-default"
+              >
+                {/* Inner float loop — staggered per card */}
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 3 + delay * 3, repeat: Infinity, ease: "easeInOut", delay: delay * 1.5 }}
+                  className="flex flex-col items-center gap-3"
+                >
+                  <span className="text-2xl">{icon}</span>
+                  <span className="text-sm text-white/70 font-medium tracking-wide">{label}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot} ${dot === "bg-green-400" ? "animate-pulse" : ""}`} />
+                    <span className="text-[10px] tracking-wide text-white/30">{status}</span>
+                  </div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ══ HOW IT WORKS — 2 BIG CARDS ════════════════════════════════════════ */}
       <section id="product" className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
