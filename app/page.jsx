@@ -318,40 +318,182 @@ export default function Home() {
       </section>
 
       {/* ══ HOW IT WORKS — 2 BIG CARDS ════════════════════════════════════════ */}
-      <section id="product" className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
-        <motion.div {...fadeUp}>
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-3">How it works</p>
-          <h2
-            className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-12 max-w-xl leading-snug"
+      <section id="product" className="relative px-6 md:px-14 py-32 max-w-6xl mx-auto">
+
+        {/* Header */}
+        <div className="mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="flex items-center gap-2 mb-6"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70" />
+            <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">How it works</p>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.05 }}
+            className="text-5xl md:text-6xl font-normal text-[#f0ece4] leading-[1.08] tracking-tight max-w-xl"
             style={{ fontFamily: "var(--font-serif)" }}
           >
-            Two layers. Total clarity.
-          </h2>
-        </motion.div>
+            Two layers.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.18 }}
+            className="text-5xl md:text-6xl font-normal text-white/40 leading-[1.08] tracking-tight max-w-xl mb-6"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            Total clarity.
+          </motion.p>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          {BIG_CARDS.map((card, i) => (
-            <motion.div
-              key={card.tag}
-              {...fadeUp}
-              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
-              className={`relative overflow-hidden border border-[#1a1e30] rounded-2xl p-10 bg-gradient-to-br ${card.accent} bg-[#08091a] hover:border-[#2a3050] transition-colors duration-300 min-h-[280px] flex flex-col justify-between`}
-            >
-              <div>
-                <span className="inline-block text-xs tracking-[0.2em] uppercase text-[#4a6090] border border-[#1e2840] px-3 py-1 rounded-full mb-6">
-                  {card.tag}
-                </span>
-                <h3
-                  className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-4 leading-snug"
-                  style={{ fontFamily: "var(--font-serif)" }}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
+            className="text-white/35 text-base md:text-lg leading-relaxed max-w-xl"
+          >
+            Afim captures what was said, and what was decided — two layers of context that compound over time.
+          </motion.p>
+        </div>
+
+        {/* Cards */}
+        <div className="grid md:grid-cols-2 gap-6">
+
+          {/* ── CARD 1: Conversation Graph ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+            whileHover={{ y: -5, borderColor: "rgba(96,130,255,0.35)" }}
+            className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8 group"
+          >
+            {/* Ambient glow */}
+            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-blue-600/8 blur-3xl pointer-events-none" />
+
+            {/* Node graph mockup */}
+            <div className="relative h-44 rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden flex items-center justify-center">
+              {/* Connecting lines (SVG) */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 176" fill="none">
+                <line x1="80"  y1="88"  x2="140" y2="55"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+                <line x1="80"  y1="88"  x2="140" y2="121" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+                <line x1="140" y1="55"  x2="210" y2="40"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+                <line x1="140" y1="55"  x2="210" y2="88"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+                <line x1="140" y1="121" x2="210" y2="88"  stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+                <line x1="140" y1="121" x2="210" y2="136" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+              </svg>
+              {/* Nodes */}
+              {[
+                { cx: 80,  cy: 88,  r: 10, color: "bg-blue-400/60",   delay: 0 },
+                { cx: 140, cy: 55,  r: 7,  color: "bg-blue-300/40",   delay: 0.4 },
+                { cx: 140, cy: 121, r: 7,  color: "bg-violet-400/40", delay: 0.8 },
+                { cx: 210, cy: 40,  r: 5,  color: "bg-white/20",      delay: 1.2 },
+                { cx: 210, cy: 88,  r: 8,  color: "bg-blue-400/50",   delay: 0.6 },
+                { cx: 210, cy: 136, r: 5,  color: "bg-white/20",      delay: 1.0 },
+              ].map(({ cx, cy, r, color, delay: d }, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.15, 1] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: d }}
+                  className={`absolute rounded-full ${color}`}
+                  style={{ left: cx - r, top: cy - r, width: r * 2, height: r * 2 }}
+                />
+              ))}
+              {/* Label */}
+              <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15">
+                Live graph
+              </span>
+            </div>
+
+            {/* Text */}
+            <div>
+              <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-blue-400/60 border border-blue-500/15 px-3 py-1 rounded-full mb-4">
+                Conversation Graph
+              </span>
+              <h3
+                className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                The full record of every AI conversation.
+              </h3>
+              <p className="text-sm text-white/25 leading-relaxed">
+                Every message, decision, and change — organized into entities, timelines, and dependencies. Nothing falls through the cracks.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── CARD 2: Decision Manual ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            whileHover={{ y: -5, borderColor: "rgba(255,180,80,0.25)" }}
+            className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.06] to-white/0 border border-white/10 rounded-3xl p-8 flex flex-col gap-8 group"
+          >
+            {/* Ambient glow */}
+            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-amber-600/6 blur-3xl pointer-events-none" />
+
+            {/* Timeline mockup */}
+            <div className="relative h-44 rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden flex flex-col justify-center gap-3 px-6">
+              {[
+                { w: "72%", dot: "bg-amber-400",  label: "Context window exceeded",   delay: 0 },
+                { w: "55%", dot: "bg-blue-400",   label: "Summary generated",         delay: 0.15 },
+                { w: "82%", dot: "bg-violet-400", label: "Decision captured",          delay: 0.3 },
+                { w: "45%", dot: "bg-amber-300",  label: "Agent consensus reached",   delay: 0.45 },
+              ].map(({ w, dot, label, delay: d }, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 + d }}
+                  className="flex items-center gap-3"
                 >
-                  {card.headline}
-                </h3>
-                <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
-              </div>
-              <div className="absolute bottom-0 right-0 w-40 h-40 rounded-full bg-blue-900/10 blur-3xl pointer-events-none" />
-            </motion.div>
-          ))}
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
+                  <div className="flex-1 h-[5px] rounded-full bg-white/8 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: w }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.9, ease: "easeOut", delay: 0.6 + d }}
+                      className="h-full rounded-full bg-gradient-to-r from-white/20 to-white/8"
+                    />
+                  </div>
+                  <span className="text-[9px] text-white/15 tracking-wide shrink-0 w-32 truncate">{label}</span>
+                </motion.div>
+              ))}
+              <span className="absolute bottom-3 right-4 text-[9px] tracking-[0.2em] uppercase text-white/15">
+                Decision log
+              </span>
+            </div>
+
+            {/* Text */}
+            <div>
+              <span className="inline-block text-[10px] tracking-[0.25em] uppercase text-amber-400/60 border border-amber-500/15 px-3 py-1 rounded-full mb-4">
+                Decision Manual
+              </span>
+              <h3
+                className="text-2xl md:text-3xl font-normal text-[#e8e4dc] mb-3 leading-snug"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                The evolving understanding of what the AI decided.
+              </h3>
+              <p className="text-sm text-white/25 leading-relaxed">
+                Your priorities, open loops, and context — captured automatically as you chat. Always up to date, always yours.
+              </p>
+            </div>
+          </motion.div>
+
         </div>
       </section>
 
