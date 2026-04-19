@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -81,6 +84,15 @@ const PRIVACY_CARDS = [
   { icon: "⚙️", title: "Full Data Control", body: "Export or delete everything, any time." },
 ];
 
+// ── ANIMATION HELPERS ─────────────────────────────────────────────────────────
+
+const fadeUp = {
+  initial: { opacity: 0, y: 40 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-100px" },
+  transition: { duration: 0.8, ease: "easeOut" },
+};
+
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
 
 function NavDropdown({ label }) {
@@ -97,19 +109,24 @@ function NavDropdown({ label }) {
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const heroRef = useRef(null);
+  const { scrollY } = useScroll();
+  // Parallax: image moves up at 0.5x scroll speed
+  const imgY = useTransform(scrollY, [0, 800], [0, -400]);
+
   return (
     <main className="min-h-screen bg-[#05070f] text-[#e8e4dc] overflow-x-hidden" style={{ fontFamily: "var(--font-sans)" }}>
 
       {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col">
+      <section ref={heroRef} className="relative min-h-screen flex flex-col">
 
         {/* Background image + overlays */}
-        <div className="absolute inset-0" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+          <motion.img
             src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=2000"
             alt=""
-            className="w-full h-full object-cover object-center"
+            style={{ y: imgY }}
+            className="w-full h-[120%] object-cover object-center"
             fetchPriority="high"
           />
           <div className="absolute inset-0 bg-[#05070f]/60" />
@@ -132,12 +149,13 @@ export default function Home() {
             <button className="text-sm text-white/60 hover:text-white/90 transition-colors px-3 py-1.5">
               Sign in
             </button>
-            <a
+            <motion.a
               href="#early-access"
+              whileHover={{ scale: 1.05 }}
               className="text-sm text-[#05070f] bg-white hover:bg-white/90 transition-colors px-5 py-2 rounded-full font-medium"
             >
               Talk to us
-            </a>
+            </motion.a>
           </div>
         </nav>
 
@@ -145,41 +163,64 @@ export default function Home() {
         <div className="relative z-10 flex flex-col items-center justify-center flex-1 text-center px-6 pb-24 pt-8">
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 text-white/75 text-xs tracking-widest uppercase px-4 py-2 rounded-full mb-10">
+          <motion.div
+            {...fadeUp}
+            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 text-white/75 text-xs tracking-widest uppercase px-4 py-2 rounded-full mb-10"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
             Afim v1.0 — Chrome Extension
-          </div>
+          </motion.div>
 
-          {/* Headline */}
-          <h1
+          {/* Headline — scale-in on page load */}
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
             className="text-6xl md:text-8xl lg:text-[96px] font-normal leading-[1.05] tracking-tight text-white mb-7 max-w-4xl"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             Never lose context
             <br />
             in long AI chats.
-          </h1>
+          </motion.h1>
 
           {/* Sub-headline */}
-          <p className="text-base md:text-lg text-white/50 max-w-md leading-relaxed mb-10">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.25 }}
+            className="text-base md:text-lg text-white/50 max-w-md leading-relaxed mb-10"
+          >
             Afim turns endless conversations into structured summaries —
             powered&nbsp;by&nbsp;Claude.
-          </p>
+          </motion.p>
 
           {/* CTA */}
-          <a
-            href="#"
-            className="inline-flex items-center gap-2 bg-white text-[#05070f] text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.35 }}
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M8 12l4-4 4 4M12 8v8" />
-            </svg>
-            Add to Chrome
-          </a>
+            <motion.a
+              href="#"
+              whileHover={{ scale: 1.05 }}
+              className="inline-flex items-center gap-2 bg-white text-[#05070f] text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12l4-4 4 4M12 8v8" />
+              </svg>
+              Add to Chrome
+            </motion.a>
+          </motion.div>
 
           {/* Trusted by */}
-          <div className="mt-16 flex flex-col items-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
+            className="mt-16 flex flex-col items-center gap-4"
+          >
             <p className="text-xs tracking-[0.25em] uppercase text-white/25">Trusted by teams at</p>
             <div className="flex flex-wrap justify-center items-center gap-8">
               {TRUSTED_BY.map((name) => (
@@ -188,12 +229,12 @@ export default function Home() {
                 </span>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ══ PLATFORM STRIP ════════════════════════════════════════════════════ */}
-      <section className="px-6 md:px-14 py-24 max-w-5xl mx-auto text-center">
+      <motion.section {...fadeUp} className="px-6 md:px-14 py-24 max-w-5xl mx-auto text-center">
         <h2
           className="text-4xl md:text-5xl font-normal text-[#f0ece4] leading-snug mb-14 max-w-2xl mx-auto"
           style={{ fontFamily: "var(--font-serif)" }}
@@ -217,22 +258,26 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* ══ HOW IT WORKS — 2 BIG CARDS ════════════════════════════════════════ */}
       <section id="product" className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
-        <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-3">How it works</p>
-        <h2
-          className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-12 max-w-xl leading-snug"
-          style={{ fontFamily: "var(--font-serif)" }}
-        >
-          Two layers. Total clarity.
-        </h2>
+        <motion.div {...fadeUp}>
+          <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-3">How it works</p>
+          <h2
+            className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-12 max-w-xl leading-snug"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            Two layers. Total clarity.
+          </h2>
+        </motion.div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {BIG_CARDS.map((card) => (
-            <div
+          {BIG_CARDS.map((card, i) => (
+            <motion.div
               key={card.tag}
+              {...fadeUp}
+              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
               className={`relative overflow-hidden border border-[#1a1e30] rounded-2xl p-10 bg-gradient-to-br ${card.accent} bg-[#08091a] hover:border-[#2a3050] transition-colors duration-300 min-h-[280px] flex flex-col justify-between`}
             >
               <div>
@@ -248,7 +293,7 @@ export default function Home() {
                 <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
               </div>
               <div className="absolute bottom-0 right-0 w-40 h-40 rounded-full bg-blue-900/10 blur-3xl pointer-events-none" />
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -256,9 +301,11 @@ export default function Home() {
       {/* ══ 3 SMALL FEATURE CARDS ═════════════════════════════════════════════ */}
       <section className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
         <div className="grid sm:grid-cols-3 gap-4">
-          {SMALL_CARDS.map((card) => (
-            <div
+          {SMALL_CARDS.map((card, i) => (
+            <motion.div
               key={card.title}
+              {...fadeUp}
+              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
               className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-8 hover:border-[#2a3050] transition-colors duration-300"
             >
               <span className="text-xl text-[#2a3560] block mb-5">{card.icon}</span>
@@ -274,13 +321,13 @@ export default function Home() {
                 )}
               </h3>
               <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* ══ ACROSS YOUR FAVORITE APPS ═════════════════════════════════════════ */}
-      <section id="features" className="px-6 md:px-14 py-28 max-w-5xl mx-auto text-center">
+      <motion.section {...fadeUp} id="features" className="px-6 md:px-14 py-28 max-w-5xl mx-auto text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-4">Integrations</p>
         <h2
           className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-16 leading-snug"
@@ -299,38 +346,52 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* ══ TESTIMONIALS ══════════════════════════════════════════════════════ */}
       <section className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
-        <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-12">What people say</p>
+        <motion.p {...fadeUp} className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-12">
+          What people say
+        </motion.p>
 
         <div className="grid sm:grid-cols-3 gap-4">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-8 flex flex-col justify-between gap-8">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div
+              key={t.name}
+              {...fadeUp}
+              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
+              className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-8 flex flex-col justify-between gap-8"
+            >
               <p className="text-sm text-[#6a6860] leading-relaxed italic">"{t.quote}"</p>
               <div>
                 <p className="text-sm text-[#c0bdb5] font-medium">{t.name}</p>
                 <p className="text-xs text-[#4a4840] mt-0.5">{t.role}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* ══ PRIVACY ═══════════════════════════════════════════════════════════ */}
       <section className="px-6 md:px-14 py-28 max-w-6xl mx-auto">
-        <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-4">Privacy & Security</p>
-        <h2
-          className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-16 max-w-lg leading-snug"
-          style={{ fontFamily: "var(--font-serif)" }}
-        >
-          Own your intelligence.
-        </h2>
+        <motion.div {...fadeUp}>
+          <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-4">Privacy & Security</p>
+          <h2
+            className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-16 max-w-lg leading-snug"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            Own your intelligence.
+          </h2>
+        </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PRIVACY_CARDS.map((card) => (
-            <div key={card.title} className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-7">
+          {PRIVACY_CARDS.map((card, i) => (
+            <motion.div
+              key={card.title}
+              {...fadeUp}
+              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.08 }}
+              className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-7"
+            >
               <span className="text-2xl block mb-5">{card.icon}</span>
               <h3
                 className="text-base font-normal text-[#e8e4dc] mb-2"
@@ -339,7 +400,7 @@ export default function Home() {
                 {card.title}
               </h3>
               <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -350,7 +411,7 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-blue-900/15 blur-[120px]" />
         </div>
 
-        <div className="relative z-10 max-w-2xl mx-auto">
+        <motion.div {...fadeUp} className="relative z-10 max-w-2xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-6">Early Access</p>
           <h2
             className="text-5xl md:text-6xl font-normal text-[#f0ece4] mb-6 leading-tight"
@@ -361,8 +422,9 @@ export default function Home() {
           <p className="text-[#4a4840] text-base mb-12 leading-relaxed">
             Be first to try Afim. Free during early access.
           </p>
-          <a
+          <motion.a
             href="#"
+            whileHover={{ scale: 1.05 }}
             className="inline-flex items-center gap-2 bg-white text-[#05070f] text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -370,8 +432,8 @@ export default function Home() {
               <path d="M8 12l4-4 4 4M12 8v8" />
             </svg>
             Add to Chrome
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </section>
 
       {/* ══ FOOTER ════════════════════════════════════════════════════════════ */}
