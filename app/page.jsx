@@ -488,6 +488,408 @@ function HowItWorksSection() {
   );
 }
 
+// ── CAPABILITIES — COMPONENTS ────────────────────────────────────────────────
+
+const AGENT_POS = [
+  { cx: 160, cy: 52  },
+  { cx: 74,  cy: 155 },
+  { cx: 246, cy: 155 },
+];
+const AGENT_ROUTES = [[0,1],[1,2],[2,0]];
+const BUBBLE_TEXTS = ["Agree", "Revise", "Ship it"];
+
+function AgentsMockup({ fast = false }) {
+  const stepMs = fast ? 800 : 1600;
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setStep(s => (s + 1) % 3), stepMs);
+    return () => clearInterval(id);
+  }, [stepMs]);
+
+  const from = AGENT_POS[AGENT_ROUTES[step][0]];
+  const to   = AGENT_POS[AGENT_ROUTES[step][1]];
+  const stepSec = stepMs / 1000;
+
+  return (
+    <svg viewBox="0 0 320 208" className="w-full h-full">
+      <defs>
+        <filter id="ag-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {/* Connecting lines — glow on active route */}
+      {AGENT_ROUTES.map(([a, b], i) => (
+        <motion.line key={i}
+          x1={AGENT_POS[a].cx} y1={AGENT_POS[a].cy}
+          x2={AGENT_POS[b].cx} y2={AGENT_POS[b].cy}
+          stroke="white" strokeWidth="0.75"
+          animate={{ opacity: step === i ? 0.38 : 0.07 }}
+          transition={{ duration: 0.35 }}
+        />
+      ))}
+
+      {/* Agent avatars */}
+      {AGENT_POS.map(({ cx, cy }, i) => {
+        const OPACITIES = [0.80, 0.60, 0.40];
+        const isActive = AGENT_ROUTES[step][0] === i || AGENT_ROUTES[step][1] === i;
+        return (
+          <g key={i}>
+            <motion.circle cx={cx} cy={cy} r={18}
+              fill="rgba(255,255,255,0.03)"
+              stroke="white"
+              animate={{ strokeOpacity: isActive ? OPACITIES[i] * 0.45 : OPACITIES[i] * 0.12 }}
+              transition={{ duration: 0.35 }}
+              strokeWidth="1"
+            />
+            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="11"
+              fill="white" fillOpacity={OPACITIES[i]}
+              fontFamily="monospace">
+              {["A","B","C"][i]}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Traveling chat bubble — re-keyed per step so it re-mounts */}
+      <motion.g
+        key={`bubble-${step}`}
+        initial={{ x: from.cx, y: from.cy - 26 }}
+        animate={{ x: to.cx, y: to.cy - 26 }}
+        transition={{ duration: stepSec * 0.62, ease: "easeInOut" }}
+      >
+        <rect x={-26} y={-13} width={52} height={20} rx={10}
+          fill="rgba(255,255,255,0.07)"
+          stroke="rgba(255,255,255,0.24)" strokeWidth="0.75"
+        />
+        <text x={0} y={1} textAnchor="middle" fontSize="8.5"
+          fill="rgba(255,255,255,0.72)" fontFamily="monospace">
+          {BUBBLE_TEXTS[step]}
+        </text>
+      </motion.g>
+
+      <text x={310} y={202} textAnchor="end" fontSize="9"
+        fill="rgba(255,255,255,0.25)" letterSpacing="2"
+        fontFamily="var(--font-sans)">
+        DEMO
+      </text>
+    </svg>
+  );
+}
+
+const BROWSER_LINES = [
+  { x: 32, y: 78,  w: 140, o: 0.50 },
+  { x: 32, y: 94,  w: 108, o: 0.35 },
+  { x: 32, y: 110, w: 162, o: 0.50 },
+  { x: 32, y: 126, w: 88,  o: 0.30 },
+  { x: 32, y: 142, w: 128, o: 0.42 },
+];
+
+function BrowserMockup({ fast = false }) {
+  const dur = fast ? 2.2 : 4.4;
+  return (
+    <svg viewBox="0 0 320 208" className="w-full h-full">
+      {/* Frame */}
+      <rect x="10" y="10" width="300" height="188" rx="8"
+        fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+      {/* Title bar */}
+      <line x1="10" y1="40" x2="310" y2="40" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+      {/* Traffic lights */}
+      <circle cx="29" cy="25" r="4.5" fill="rgba(255,255,255,0.32)" />
+      <circle cx="45" cy="25" r="4.5" fill="rgba(255,255,255,0.20)" />
+      <circle cx="61" cy="25" r="4.5" fill="rgba(255,255,255,0.13)" />
+      {/* URL bar */}
+      <rect x="82" y="16" width="160" height="18" rx="5"
+        fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+      <text x="162" y="28.5" textAnchor="middle" fontSize="7.5"
+        fill="rgba(255,255,255,0.35)" fontFamily="monospace">
+        chat.openai.com
+      </text>
+
+      {/* Content lines */}
+      {BROWSER_LINES.map(({ x, y, w, o }, i) => (
+        <rect key={i} x={x} y={y} width={w} height="3.5" rx="1.75"
+          fill={`rgba(255,255,255,${o})`} />
+      ))}
+
+      {/* Selection highlight — line 2 (y≈94) */}
+      <motion.rect x="28" y="88" width="196" height="14" rx="2"
+        fill="rgba(255,255,255,0)"
+        animate={{ fill: [
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0.07)",
+          "rgba(255,255,255,0.07)",
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0)",
+        ]}}
+        transition={{ duration: dur, repeat: Infinity, ease: "easeInOut",
+          times: [0, 0.18, 0.36, 0.50, 1] }}
+      />
+      {/* Selection highlight — line 4 (y≈126) */}
+      <motion.rect x="28" y="120" width="196" height="14" rx="2"
+        fill="rgba(255,255,255,0)"
+        animate={{ fill: [
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0.07)",
+          "rgba(255,255,255,0.07)",
+          "rgba(255,255,255,0)",
+        ]}}
+        transition={{ duration: dur, repeat: Infinity, ease: "easeInOut",
+          times: [0, 0.50, 0.68, 0.82, 1] }}
+      />
+
+      {/* Cursor — intentional path: idle → line2 → dwell → line4 → dwell → reset */}
+      <motion.g
+        animate={{
+          x: [55, 55, 148, 148, 95, 95, 55],
+          y: [83, 94, 94, 126, 126, 83, 83],
+        }}
+        transition={{ duration: dur, repeat: Infinity, ease: "easeInOut",
+          times: [0, 0.10, 0.36, 0.52, 0.78, 0.92, 1] }}
+      >
+        <path d="M0,0 L0,11 L2.5,8 L5,13 L6.8,12.5 L4,7.5 L8.5,7.5 Z"
+          fill="rgba(255,255,255,0.72)" />
+      </motion.g>
+
+      <text x={303} y={194} textAnchor="end" fontSize="9"
+        fill="rgba(255,255,255,0.25)" letterSpacing="2"
+        fontFamily="var(--font-sans)">
+        DEMO
+      </text>
+    </svg>
+  );
+}
+
+const NET_CENTER = { cx: 160, cy: 104 };
+const NET_NODES  = [
+  { cx: 72,  cy: 48,  label: "ChatGPT"    },
+  { cx: 248, cy: 48,  label: "Claude"     },
+  { cx: 72,  cy: 160, label: "Gemini"     },
+  { cx: 248, cy: 160, label: "Perplexity" },
+];
+
+function PulseDot({ to, delay, fast }) {
+  const dur = fast ? 1.1 : 2.0;
+  return (
+    <motion.circle r={2.8} fill="rgba(255,255,255,0.85)"
+      animate={{
+        cx: [NET_CENTER.cx, to.cx],
+        cy: [NET_CENTER.cy, to.cy],
+        opacity: [0, 1, 1, 0],
+      }}
+      transition={{ duration: dur, repeat: Infinity, ease: "easeInOut",
+        delay, times: [0, 0.08, 0.88, 1] }}
+    />
+  );
+}
+
+function NetworkMockup({ fast = false }) {
+  return (
+    <svg viewBox="0 0 320 208" className="w-full h-full">
+      <defs>
+        <filter id="net2-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="2.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <pattern id="grid-dots" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="11" cy="11" r="0.9" fill="rgba(255,255,255,0.05)" />
+        </pattern>
+      </defs>
+
+      {/* Background constellation grid */}
+      <rect x="0" y="0" width="320" height="208" fill="url(#grid-dots)" />
+
+      {/* Lines from center to each node */}
+      {NET_NODES.map((n, i) => (
+        <line key={i}
+          x1={NET_CENTER.cx} y1={NET_CENTER.cy}
+          x2={n.cx} y2={n.cy}
+          stroke="rgba(255,255,255,0.10)" strokeWidth="1"
+        />
+      ))}
+
+      {/* Staggered data pulses */}
+      {NET_NODES.map((n, i) => (
+        <PulseDot key={i} to={n} delay={i * 0.5} fast={fast} />
+      ))}
+
+      {/* External nodes */}
+      {NET_NODES.map(({ cx, cy, label }, i) => (
+        <g key={i}>
+          <motion.circle cx={cx} cy={cy} r={5.5} fill="white"
+            filter="url(#net2-glow)"
+            animate={{ opacity: [0.28, 0.68, 0.28] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: i * 0.55 }}
+          />
+          <text x={cx} y={cy + 17} textAnchor="middle" fontSize="7.5"
+            fill="rgba(255,255,255,0.38)" fontFamily="monospace">
+            {label}
+          </text>
+        </g>
+      ))}
+
+      {/* Central Afim node */}
+      <circle cx={NET_CENTER.cx} cy={NET_CENTER.cy} r={22}
+        fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.20)" strokeWidth="1" />
+      <text x={NET_CENTER.cx} y={NET_CENTER.cy + 4} textAnchor="middle" fontSize="9.5"
+        fill="rgba(255,255,255,0.82)" fontFamily="monospace" letterSpacing="0.5">
+        Afim
+      </text>
+
+      <text x={310} y={202} textAnchor="end" fontSize="9"
+        fill="rgba(255,255,255,0.25)" letterSpacing="2"
+        fontFamily="var(--font-sans)">
+        DEMO
+      </text>
+    </svg>
+  );
+}
+
+// Single capability card with 5° tilt
+function CapabilityCard({ Mockup, title, body, soon, delay }) {
+  const ref = useRef(null);
+  const [hovered, setHovered] = useState(false);
+  const rotX = useMotionValue(0);
+  const rotY = useMotionValue(0);
+  const sRotX = useSpring(rotX, { stiffness: 220, damping: 28 });
+  const sRotY = useSpring(rotY, { stiffness: 220, damping: 28 });
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    rotY.set(((e.clientX - rect.left) / rect.width  - 0.5) * 10);
+    rotX.set(((e.clientY - rect.top)  / rect.height - 0.5) * -10);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.8, ease: "easeOut", delay }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); rotX.set(0); rotY.set(0); }}
+      whileHover={{ y: -5, borderColor: "rgba(255,255,255,0.20)" }}
+      style={{ rotateX: sRotX, rotateY: sRotY, transformPerspective: 1200, willChange: "transform" }}
+      className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/10 rounded-3xl p-8 flex flex-col gap-6"
+    >
+      {/* Neutral ambient glow */}
+      <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-white/[0.025] blur-3xl pointer-events-none" />
+      {/* Mockup */}
+      <div className="relative h-48 rounded-2xl bg-white/[0.02] border border-white/[0.06] overflow-hidden">
+        <Mockup fast={hovered} />
+      </div>
+      {/* Text */}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2.5 mb-3">
+          <h3 className="text-2xl font-normal text-[#e8e4dc]" style={{ fontFamily: "var(--font-serif)" }}>
+            {title}
+          </h3>
+          {soon && (
+            <span className="text-[10px] tracking-widest uppercase bg-white/10 border border-white/20 text-white/60 px-2.5 py-0.5 rounded-full">
+              Soon
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-white/60 leading-relaxed">{body}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+// The full capabilities section with shared cursor glow
+function CapabilitiesSection() {
+  const sectionRef = useRef(null);
+  const [isOver, setIsOver] = useState(false);
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const glowX = useSpring(rawX, { stiffness: 50, damping: 20 });
+  const glowY = useSpring(rawY, { stiffness: 50, damping: 20 });
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    rawX.set(e.clientX - rect.left);
+    rawY.set(e.clientY - rect.top);
+  }, [rawX, rawY]);
+
+  const CAPS = [
+    { title: "Autonomous Agents",        body: SMALL_CARDS[0].body, soon: true,  Mockup: AgentsMockup  },
+    { title: "Browser Control",           body: SMALL_CARDS[1].body, soon: false, Mockup: BrowserMockup },
+    { title: "Bring Your Context Anywhere", body: SMALL_CARDS[2].body, soon: false, Mockup: NetworkMockup },
+  ];
+
+  return (
+    <section
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsOver(true)}
+      onMouseLeave={() => setIsOver(false)}
+      className="relative px-6 md:px-14 py-28 max-w-6xl mx-auto overflow-hidden"
+    >
+      {/* Cursor glow */}
+      <motion.div
+        aria-hidden="true"
+        animate={{ opacity: isOver ? 1 : 0 }}
+        transition={{ duration: 0.4 }}
+        style={{
+          position: "absolute",
+          left: -250, top: -250,
+          x: glowX, y: glowY,
+          width: 500, height: 500,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Section header */}
+      <div className="relative z-10 mb-14">
+        <motion.div
+          {...fadeUp}
+          className="flex items-center gap-2 mb-5"
+        >
+          <span className="w-1 h-1 rounded-full bg-white/50" />
+          <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">Capabilities</p>
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.08 }}
+          className="text-4xl md:text-5xl font-normal text-[#f0ece4] leading-[1.08] mb-4 max-w-lg"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          Built for how you actually work.
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.18 }}
+          className="text-white/35 text-base leading-relaxed max-w-md"
+        >
+          Three layers of intelligence, all working together.
+        </motion.p>
+      </div>
+
+      {/* Cards */}
+      <div className="relative z-10 grid sm:grid-cols-3 gap-5">
+        {CAPS.map((cap, i) => (
+          <CapabilityCard key={cap.title} {...cap} delay={i * 0.15} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -701,33 +1103,8 @@ export default function Home() {
       {/* ══ HOW IT WORKS ══════════════════════════════════════════════════════ */}
       <HowItWorksSection />
 
-      {/* ══ 3 SMALL FEATURE CARDS ═════════════════════════════════════════════ */}
-      <section className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
-        <div className="grid sm:grid-cols-3 gap-4">
-          {SMALL_CARDS.map((card, i) => (
-            <motion.div
-              key={card.title}
-              {...fadeUp}
-              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
-              className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-8 hover:border-[#2a3050] transition-colors duration-300"
-            >
-              <span className="text-xl text-[#2a3560] block mb-5">{card.icon}</span>
-              <h3
-                className="text-lg font-normal text-[#e8e4dc] mb-2 flex items-center gap-2"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                {card.title}
-                {card.soon && (
-                  <span className="text-[9px] tracking-wider uppercase border border-[#2a3050] text-[#4a5878] px-1.5 py-0.5 rounded-full">
-                    Soon
-                  </span>
-                )}
-              </h3>
-              <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      {/* ══ CAPABILITIES ══════════════════════════════════════════════════════ */}
+      <CapabilitiesSection />
 
       {/* ══ ACROSS YOUR FAVORITE APPS ═════════════════════════════════════════ */}
       <motion.section {...fadeUp} id="features" className="px-6 md:px-14 py-28 max-w-5xl mx-auto text-center">
