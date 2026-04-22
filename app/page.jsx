@@ -121,12 +121,14 @@ const SOCIAL_LOGOS = [
 const T_SLOT = 424;
 const T_SINGLE_W = TESTIMONIALS.length * T_SLOT; // 6 * 424 = 2544
 
-const PRIVACY_CARDS = [
-  { icon: "🔐", title: "256-bit Encryption", body: "End-to-end encrypted at rest and in transit." },
-  { icon: "☁️", title: "Private Cloud", body: "Your summaries never touch a shared server." },
-  { icon: "🛡", title: "Multi-factor Auth", body: "Hardware key and biometric support built in." },
-  { icon: "⚙️", title: "Full Data Control", body: "Export or delete everything, any time." },
+const PRIVACY_FEATURES = [
+  { label: "ENCRYPTION",      title: "256-bit Encryption", body: "End-to-end encrypted at rest and in transit.",   icon: "lock"     },
+  { label: "INFRASTRUCTURE",  title: "Private Cloud",       body: "Your summaries never touch a shared server.",   icon: "cloud"    },
+  { label: "AUTHENTICATION",  title: "Multi-factor Auth",   body: "Hardware key and biometric support built in.",  icon: "shield"   },
+  { label: "DATA CONTROL",    title: "Full Data Control",   body: "Export or delete everything, any time.",        icon: "database" },
 ];
+
+const COMPLIANCE_BADGES = ["SOC 2 Type II", "GDPR Ready", "HIPAA Compatible", "ISO 27001"];
 
 // ── ANIMATION HELPERS ─────────────────────────────────────────────────────────
 
@@ -1240,6 +1242,236 @@ function TestimonialsSection() {
   );
 }
 
+// ── PRIVACY & SECURITY ───────────────────────────────────────────────────────
+
+function PrivacyIcon({ type }) {
+  const S = { fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" };
+  const icons = {
+    lock: (
+      <>
+        <rect x="3" y="11" width="18" height="11" rx="2" {...S} />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" {...S} />
+        <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    cloud: (
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" {...S} />
+    ),
+    shield: (
+      <>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" {...S} />
+        <polyline points="9 12 11 14 15 10" {...S} />
+      </>
+    ),
+    database: (
+      <>
+        <ellipse cx="12" cy="5" rx="9" ry="3" {...S} />
+        <path d="M3 5v4c0 1.66 4.03 3 9 3s9-1.34 9-3V5" {...S} />
+        <path d="M3 9v4c0 1.66 4.03 3 9 3s9-1.34 9-3V9" {...S} />
+        <path d="M3 13v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4" {...S} />
+      </>
+    ),
+  };
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" className="text-white/45 flex-shrink-0 mt-0.5">
+      {icons[type]}
+    </svg>
+  );
+}
+
+const ORBIT_R = 132;
+const ORBIT_PARTICLES = [
+  { cx: 200,                         cy: 200 - ORBIT_R,                     r: 3.5, opacity: 0.62 },
+  { cx: 200 + ORBIT_R * 0.866,       cy: 200 + ORBIT_R * 0.5,              r: 2.5, opacity: 0.40 },
+  { cx: 200 - ORBIT_R * 0.866,       cy: 200 + ORBIT_R * 0.5,              r: 2.0, opacity: 0.30 },
+];
+
+function ShieldVisual() {
+  const orbitAngle = useMotionValue(0);
+
+  useEffect(() => {
+    const ctrl = animate(orbitAngle, 360, { duration: 20, ease: "linear", repeat: Infinity });
+    return ctrl.stop;
+  }, [orbitAngle]);
+
+  return (
+    <div className="relative w-full max-w-[380px] aspect-square select-none">
+      {/* Soft radial glow */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        aria-hidden="true"
+      >
+        <div
+          className="w-56 h-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)", filter: "blur(44px)" }}
+        />
+      </div>
+
+      <svg viewBox="0 0 400 400" width="100%" height="100%">
+        <defs>
+          <filter id="priv-glow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        {/* Static ring guides */}
+        {[100, 150, 185].map((r, i) => (
+          <circle key={r} cx="200" cy="200" r={r} fill="none"
+            stroke="rgba(255,255,255,0.05)" strokeWidth="1"
+            strokeDasharray={i === 2 ? "4 6" : "none"}
+          />
+        ))}
+
+        {/* Radar pulse rings — 3 offset phases */}
+        {[0, 1.25, 2.5].map((delay, i) => (
+          <motion.circle
+            key={i} cx="200" cy="200" r="60"
+            fill="none" stroke="white" strokeWidth="1"
+            animate={{ r: [60, 192], opacity: [0.22, 0] }}
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeOut", delay }}
+          />
+        ))}
+
+        {/* Inner node */}
+        <circle cx="200" cy="200" r="58"
+          fill="rgba(255,255,255,0.025)"
+          stroke="rgba(255,255,255,0.14)" strokeWidth="1"
+        />
+
+        {/* Orbiting particles */}
+        <motion.g style={{ rotate: orbitAngle, transformOrigin: "200px 200px" }}>
+          {ORBIT_PARTICLES.map(({ cx, cy, r, opacity }, i) => (
+            <circle key={i} cx={cx} cy={cy} r={r}
+              fill={`rgba(255,255,255,${opacity})`}
+              filter="url(#priv-glow)"
+            />
+          ))}
+        </motion.g>
+
+        {/* Lock icon — centered at (200, 207) */}
+        <rect x="187" y="207" width="26" height="20" rx="3"
+          fill="rgba(255,255,255,0.07)"
+          stroke="rgba(255,255,255,0.78)" strokeWidth="1.5"
+        />
+        <path d="M 193 207 v-7 a7 7 0 0 1 14 0 v7"
+          fill="none" stroke="rgba(255,255,255,0.78)" strokeWidth="1.5" strokeLinecap="round"
+        />
+        <circle cx="200" cy="217" r="2.5" fill="rgba(255,255,255,0.78)" />
+      </svg>
+    </div>
+  );
+}
+
+function PrivacySection() {
+  return (
+    <section className="relative px-6 md:px-14 py-28 max-w-6xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-20">
+        <motion.div {...fadeUp} className="flex items-center gap-2 mb-6">
+          <span className="w-1 h-1 rounded-full bg-white/50" />
+          <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">Privacy & Security</p>
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.07 }}
+          className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-4 leading-[1.08] max-w-lg"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          Own your intelligence.
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.17 }}
+          className="text-white/35 text-base leading-relaxed max-w-md"
+        >
+          Every conversation is yours. Encrypted, private, exportable — always.
+        </motion.p>
+      </div>
+
+      {/* Two-column: shield left + features right */}
+      <div className="grid md:grid-cols-[1fr_1px_1fr] gap-0 items-center mb-20">
+
+        {/* Left — animated shield */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.1 }}
+          className="flex justify-center pb-16 md:pb-0 md:pr-16"
+        >
+          <ShieldVisual />
+        </motion.div>
+
+        {/* Vertical separator */}
+        <div className="hidden md:block self-stretch bg-white/[0.05]" />
+
+        {/* Right — feature rows */}
+        <div className="md:pl-16">
+          {PRIVACY_FEATURES.map(({ label, title, body, icon }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.65, ease: "easeOut", delay: 0.1 + i * 0.1 }}
+            >
+              <div className="flex items-start gap-4 py-7">
+                <PrivacyIcon type={icon} />
+                <div>
+                  <p className="text-[10px] tracking-[0.28em] uppercase text-white/35 mb-1.5"
+                    style={{ fontFamily: "var(--font-sans)" }}>
+                    {label}
+                  </p>
+                  <h3
+                    className="text-xl font-normal text-[#e8e4dc] mb-1.5 leading-snug"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
+                    {title}
+                  </h3>
+                  <p className="text-sm text-white/55 leading-relaxed">{body}</p>
+                </div>
+              </div>
+              {i < PRIVACY_FEATURES.length - 1 && (
+                <div className="border-t border-white/[0.07]" />
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Compliance badges */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.7, ease: "easeOut", delay: 0.25 }}
+        className="text-center"
+      >
+        <p className="text-[9px] tracking-[0.35em] uppercase text-white/30 mb-5">
+          Compliance
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {COMPLIANCE_BADGES.map((badge) => (
+            <span
+              key={badge}
+              className="bg-white/[0.04] border border-white/10 px-4 py-1.5 text-[11px] text-white/55 rounded-full uppercase tracking-wider"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+
+    </section>
+  );
+}
+
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -1463,37 +1695,7 @@ export default function Home() {
       <TestimonialsSection />
 
       {/* ══ PRIVACY ═══════════════════════════════════════════════════════════ */}
-      <section className="px-6 md:px-14 py-28 max-w-6xl mx-auto">
-        <motion.div {...fadeUp}>
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-4">Privacy & Security</p>
-          <h2
-            className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-16 max-w-lg leading-snug"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Own your intelligence.
-          </h2>
-        </motion.div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PRIVACY_CARDS.map((card, i) => (
-            <motion.div
-              key={card.title}
-              {...fadeUp}
-              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.08 }}
-              className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-7"
-            >
-              <span className="text-2xl block mb-5">{card.icon}</span>
-              <h3
-                className="text-base font-normal text-[#e8e4dc] mb-2"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                {card.title}
-              </h3>
-              <p className="text-sm text-[#4a4840] leading-relaxed">{card.body}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      <PrivacySection />
 
       {/* ══ FINAL CTA ═════════════════════════════════════════════════════════ */}
       <section
