@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion, animate, useScroll, useTransform, useMotionValue, useSpring, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useInView } from "framer-motion";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -49,18 +49,31 @@ const SMALL_CARDS = [
   },
 ];
 
-const INNER_APPS = ["ChatGPT", "Claude", "Gemini", "Perplexity", "Copilot", "Cursor", "Notion AI", "Windsurf"];
-const OUTER_APPS = ["Raycast", "Arc", "Linear AI", "Obsidian", "GitHub"];
+const TOP_ROW = [
+  { label: "ChatGPT",         url: "https://cdn.simpleicons.org/openai"           },
+  { label: "Claude",          url: "https://cdn.simpleicons.org/anthropic/000000" },
+  { label: "Gemini",          url: "https://cdn.simpleicons.org/googlegemini"     },
+  { label: "Perplexity",      url: "https://cdn.simpleicons.org/perplexity"       },
+  { label: "Notion",          url: "https://cdn.simpleicons.org/notion/000000"    },
+  { label: "Slack",           url: "https://cdn.simpleicons.org/slack"            },
+  { label: "Google Docs",     url: "https://cdn.simpleicons.org/googledocs"       },
+  { label: "Google Sheets",   url: "https://cdn.simpleicons.org/googlesheets"     },
+  { label: "Google Drive",    url: "https://cdn.simpleicons.org/googledrive"      },
+  { label: "Google Calendar", url: "https://cdn.simpleicons.org/googlecalendar"   },
+];
 
-const ORB_CX = 350;
-const ORB_CY = 350;
-const INNER_R = 190;
-const OUTER_R = 282;
-
-function orbPos(index, total, radius) {
-  const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-  return { x: ORB_CX + Math.cos(angle) * radius, y: ORB_CY + Math.sin(angle) * radius };
-}
+// 9 icons so each sits in the gap between two top-row icons (brick pattern)
+const BOT_ROW = [
+  { label: "Linear",   url: "https://cdn.simpleicons.org/linear/000000"  },
+  { label: "Asana",    url: "https://cdn.simpleicons.org/asana"          },
+  { label: "Gmail",    url: "https://cdn.simpleicons.org/gmail"          },
+  { label: "GitHub",   url: "https://cdn.simpleicons.org/github/000000"  },
+  { label: "Figma",    url: "https://cdn.simpleicons.org/figma"          },
+  { label: "Discord",  url: "https://cdn.simpleicons.org/discord"        },
+  { label: "Raycast",  url: "https://cdn.simpleicons.org/raycast/000000" },
+  { label: "Zoom",     url: "https://cdn.simpleicons.org/zoom"           },
+  { label: "Arc",      url: "https://cdn.simpleicons.org/arc/000000"     },
+];
 
 const TESTIMONIALS = [
   {
@@ -895,78 +908,74 @@ function CapabilitiesSection() {
   );
 }
 
-// ── INTEGRATIONS — ORBITAL ────────────────────────────────────────────────────
+// ── INTEGRATIONS — MAC-STYLE ICON ROWS ───────────────────────────────────────
 
-function OrbitalPulse({ toX, toY, delay, fast, bright }) {
-  const dur = fast ? 1.1 : 2.2;
-  const endOpacity = bright ? 0.85 : 0.52;
+// Icon slot width = 72px icon + 12px gap = 84px. Half-slot offset for brick pattern = 42px.
+const ICON_SIZE  = 72;
+const ICON_GAP   = 12;
+const HALF_SLOT  = (ICON_SIZE + ICON_GAP) / 2; // 42px
+
+function AppIcon({ label, url, index, rowDelay = 0 }) {
+  const floatDur   = 3.2 + (index % 5) * 0.5;
+  const floatAmt   = 3 + (index % 4) * 1.5;
+  const entryDelay = rowDelay + index * 0.06;
+
   return (
-    <motion.circle
-      r={2.6}
-      fill="white"
-      cx={ORB_CX} cy={ORB_CY}
-      animate={{
-        x: [0, toX - ORB_CX, toX - ORB_CX],
-        y: [0, toY - ORB_CY, toY - ORB_CY],
-        opacity: [0, endOpacity, 0],
-      }}
-      transition={{
-        duration: dur,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay,
-        times: [0, 0.78, 1],
-      }}
-    />
+    <motion.div
+      initial={{ opacity: 0, scale: 0.82, y: 14 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: entryDelay }}
+      className="flex-shrink-0"
+    >
+      <motion.div
+        animate={{ y: [0, -floatAmt, 0] }}
+        transition={{ duration: floatDur, repeat: Infinity, ease: "easeInOut", delay: entryDelay * 0.55 }}
+        whileHover={{ y: -8, scale: 1.10 }}
+        className="cursor-default"
+        style={{
+          width: ICON_SIZE,
+          height: ICON_SIZE,
+          background: "#ffffff",
+          borderRadius: 18,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.18)",
+        }}
+      >
+        <img
+          src={url}
+          alt={label}
+          width={44}
+          height={44}
+          className="object-contain select-none pointer-events-none"
+          draggable={false}
+        />
+      </motion.div>
+    </motion.div>
   );
 }
 
 function IntegrationsSection() {
-  const sectionRef = useRef(null);
-  const [isOver, setIsOver] = useState(false);
-  const [hoveredInner, setHoveredInner] = useState(null);
-
-  // Slow continuous rotation
-  const ringAngle = useMotionValue(0);
-  useEffect(() => {
-    const ctrl = animate(ringAngle, 360, { duration: 82, ease: "linear", repeat: Infinity });
-    return ctrl.stop;
-  }, [ringAngle]);
-
-  // Counter-rotation keeps labels upright
-  const counterAngle = useTransform(ringAngle, v => -v);
-
-  // Cursor-following drift (very gentle 3D tilt)
-  const rawX = useMotionValue(0);
-  const rawY = useMotionValue(0);
-  const driftX = useSpring(useTransform(rawX, v => v * 5), { stiffness: 28, damping: 22 });
-  const driftY = useSpring(useTransform(rawY, v => v * 5), { stiffness: 28, damping: 22 });
-
-  const handleMouseMove = useCallback((e) => {
-    const rect = sectionRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    rawX.set((e.clientX - rect.left) / rect.width - 0.5);
-    rawY.set((e.clientY - rect.top)  / rect.height - 0.5);
-  }, [rawX, rawY]);
-
-  const innerNodes = INNER_APPS.map((app, i) => ({ app, ...orbPos(i, INNER_APPS.length, INNER_R) }));
-  const outerNodes = OUTER_APPS.map((app, i) => ({ app, ...orbPos(i, OUTER_APPS.length, OUTER_R) }));
-
   return (
     <section
       id="features"
-      ref={sectionRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsOver(true)}
-      onMouseLeave={() => { setIsOver(false); rawX.set(0); rawY.set(0); }}
       className="relative px-6 md:px-14 py-28 max-w-5xl mx-auto text-center overflow-hidden"
     >
+      {/* Subtle dot-grid */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.018) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
       {/* Section header */}
-      <div className="relative z-10 mb-14">
-        <motion.div
-          {...fadeUp}
-          className="flex items-center justify-center gap-2 mb-5"
-        >
+      <div className="relative z-10 mb-16">
+        <motion.div {...fadeUp} className="flex items-center justify-center gap-2 mb-5">
           <span className="w-1 h-1 rounded-full bg-white/50" />
           <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">Integrations</p>
         </motion.div>
@@ -991,173 +1000,82 @@ function IntegrationsSection() {
         </motion.p>
       </div>
 
-      {/* Orbital arena */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
-        style={{ rotateX: driftY, rotateY: driftX, perspective: 1000 }}
-        className="relative mx-auto"
-        aria-hidden="true"
-      >
-        <svg
-          viewBox="0 0 700 700"
-          width="100%"
-          className="block max-w-[680px] mx-auto overflow-visible"
+      {/* Icon constellation */}
+      <div className="relative z-10 flex flex-col items-center">
+
+        {/* Radial glow — floats behind the Afim center */}
+        <div
+          className="absolute pointer-events-none"
+          aria-hidden="true"
+          style={{
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 320, height: 320,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)",
+            filter: "blur(48px)",
+          }}
+        />
+
+        {/* TOP ROW — 10 icons */}
+        <div
+          className="flex items-end"
+          style={{ gap: ICON_GAP }}
         >
-          <defs>
-            <filter id="orb-center-glow" x="-120%" y="-120%" width="340%" height="340%">
-              <feGaussianBlur stdDeviation="22" result="b"/>
-              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <pattern id="orb-bg-dots" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
-              <circle cx="13" cy="13" r="0.9" fill="rgba(255,255,255,0.045)" />
-            </pattern>
-            <radialGradient id="orb-radial" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"   stopColor="rgba(255,255,255,0.07)" />
-              <stop offset="70%"  stopColor="rgba(255,255,255,0.02)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)"    />
-            </radialGradient>
-          </defs>
+          {TOP_ROW.map((app, i) => (
+            <AppIcon key={app.label} {...app} index={i} rowDelay={0.15} />
+          ))}
+        </div>
 
-          {/* Background constellation dots */}
-          <rect x="0" y="0" width="700" height="700" fill="url(#orb-bg-dots)" />
-
-          {/* Large soft background glow */}
-          <circle cx={ORB_CX} cy={ORB_CY} r="240" fill="url(#orb-radial)" />
-
-          {/* Faint orbit track rings */}
-          <circle cx={ORB_CX} cy={ORB_CY} r={INNER_R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          <circle cx={ORB_CX} cy={ORB_CY} r={OUTER_R} fill="none" stroke="rgba(255,255,255,0.025)" strokeWidth="1" />
-
-          {/* ── Rotating group ── */}
-          <motion.g style={{ rotate: ringAngle, transformOrigin: `${ORB_CX}px ${ORB_CY}px` }}>
-
-            {/* Lines: inner ring */}
-            {innerNodes.map(({ app, x, y }, i) => (
-              <motion.line key={`il-${i}`}
-                x1={ORB_CX} y1={ORB_CY} x2={x} y2={y}
-                stroke="white" strokeWidth="1"
-                animate={{ opacity: hoveredInner === i ? 0.42 : 0.09 }}
-                transition={{ duration: 0.22 }}
-              />
-            ))}
-
-            {/* Lines: outer ring */}
-            {outerNodes.map(({ app, x, y }, i) => (
-              <line key={`ol-${i}`}
-                x1={ORB_CX} y1={ORB_CY} x2={x} y2={y}
-                stroke="rgba(255,255,255,0.05)" strokeWidth="0.75"
-              />
-            ))}
-
-            {/* Data pulses: inner */}
-            {innerNodes.map(({ app, x, y }, i) => (
-              <OrbitalPulse
-                key={`ip-${i}`}
-                toX={x} toY={y}
-                delay={i * 0.36}
-                fast={hoveredInner === i}
-                bright={hoveredInner === i}
-              />
-            ))}
-
-            {/* Data pulses: outer (slower, fainter) */}
-            {outerNodes.map(({ app, x, y }, i) => (
-              <OrbitalPulse
-                key={`op-${i}`}
-                toX={x} toY={y}
-                delay={i * 0.55 + 0.25}
-                fast={false}
-                bright={false}
-              />
-            ))}
-
-            {/* Inner app nodes */}
-            {innerNodes.map(({ app, x, y }, i) => (
-              <g key={`in-${i}`}
-                onMouseEnter={() => setHoveredInner(i)}
-                onMouseLeave={() => setHoveredInner(null)}
-                style={{ cursor: "default" }}
-              >
-                {/* Node pill background */}
-                <motion.rect
-                  x={x - 32} y={y - 13} width={64} height={26} rx={13}
-                  fill="rgba(255,255,255,0.04)"
-                  stroke="white"
-                  animate={{
-                    strokeOpacity: hoveredInner === i ? 0.28 : 0.11,
-                    scaleX: hoveredInner === i ? 1.08 : 1,
-                    scaleY: hoveredInner === i ? 1.08 : 1,
-                  }}
-                  style={{ transformOrigin: `${x}px ${y}px` }}
-                  transition={{ duration: 0.18 }}
-                />
-                {/* Counter-rotating label */}
-                <motion.g style={{ rotate: counterAngle, transformOrigin: `${x}px ${y}px` }}>
-                  <text
-                    x={x} y={y + 4}
-                    textAnchor="middle"
-                    fontSize="9.5"
-                    fill="rgba(255,255,255,0.72)"
-                    fontFamily="monospace"
-                  >
-                    {app}
-                  </text>
-                </motion.g>
-              </g>
-            ))}
-
-            {/* Outer app nodes */}
-            {outerNodes.map(({ app, x, y }, i) => (
-              <g key={`on-${i}`}>
-                <rect
-                  x={x - 28} y={y - 11} width={56} height={22} rx={11}
-                  fill="rgba(255,255,255,0.015)"
-                  stroke="rgba(255,255,255,0.07)" strokeWidth="0.75"
-                />
-                <motion.g style={{ rotate: counterAngle, transformOrigin: `${x}px ${y}px` }}>
-                  <text
-                    x={x} y={y + 3.5}
-                    textAnchor="middle"
-                    fontSize="8"
-                    fill="rgba(255,255,255,0.28)"
-                    fontFamily="monospace"
-                  >
-                    {app}
-                  </text>
-                </motion.g>
-              </g>
-            ))}
-
-          </motion.g>
-          {/* ── End rotating group ── */}
-
-          {/* Center glow bloom */}
-          <circle cx={ORB_CX} cy={ORB_CY} r="52"
-            fill="rgba(255,255,255,0.07)"
-            filter="url(#orb-center-glow)"
-          />
-
-          {/* Center Afim node (static, always on top) */}
-          <circle cx={ORB_CX} cy={ORB_CY} r="44"
-            fill="rgba(255,255,255,0.07)"
-            stroke="rgba(255,255,255,0.22)" strokeWidth="1.5"
-          />
-          <text
-            x={ORB_CX} y={ORB_CY + 5}
-            textAnchor="middle"
-            fontSize="15"
-            fill="rgba(255,255,255,0.88)"
-            fontFamily="var(--font-serif)"
-            letterSpacing="1"
+        {/* AFIM CENTER ICON — overlaps both rows with negative margins */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.75 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+          style={{ marginTop: -16, marginBottom: -16, zIndex: 20, position: "relative" }}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.06, 1] }}
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: 96,
+              height: 96,
+              background: "#ffffff",
+              borderRadius: 22,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.22), 0 0 60px rgba(255,255,255,0.08)",
+              cursor: "default",
+            }}
           >
-            Afim
-          </text>
+            <span
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 42,
+                fontWeight: 400,
+                color: "#05070f",
+                lineHeight: 1,
+                userSelect: "none",
+              }}
+            >
+              A
+            </span>
+          </motion.div>
+        </motion.div>
 
-        </svg>
-      </motion.div>
+        {/* BOTTOM ROW — 9 icons, offset by half-slot to brick-pattern with top row */}
+        <div
+          className="flex items-start"
+          style={{ gap: ICON_GAP, transform: `translateX(${HALF_SLOT}px)` }}
+        >
+          {BOT_ROW.map((app, i) => (
+            <AppIcon key={app.label} {...app} index={i} rowDelay={0.3} />
+          ))}
+        </div>
+
+      </div>
     </section>
   );
 }
