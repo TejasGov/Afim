@@ -1472,6 +1472,40 @@ function PrivacySection() {
   );
 }
 
+// ── SECTION BACKGROUND ───────────────────────────────────────────────────────
+
+function SectionBackground({ url, loading = "lazy" }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
+
+  return (
+    <div ref={ref} className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <motion.div
+        className="absolute inset-[-10%]"
+        style={{ y }}
+        animate={{ scale: [1, 1.05] }}
+        transition={{ duration: 30, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt=""
+          loading={loading}
+          draggable={false}
+          className="w-full h-full object-cover select-none"
+        />
+      </motion.div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/68 to-black/88" />
+      <div className="absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-[#05070f] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-[#05070f] to-transparent" />
+    </div>
+  );
+}
+
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -1609,11 +1643,10 @@ export default function Home() {
 
       {/* ══ PLATFORM STRIP ════════════════════════════════════════════════════ */}
       <section className="relative py-40 px-6 md:px-14 text-center overflow-hidden">
-        {/* Atmospheric nebula glow */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-blue-700/10 blur-[120px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[250px] rounded-full bg-violet-700/8 blur-[80px]" />
-        </div>
+        <SectionBackground
+          url="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=2400&q=80"
+          loading="eager"
+        />
 
         <div className="relative z-10 max-w-4xl mx-auto">
           {/* Label */}
@@ -1683,19 +1716,34 @@ export default function Home() {
       </section>
 
       {/* ══ HOW IT WORKS ══════════════════════════════════════════════════════ */}
-      <HowItWorksSection />
+      <div className="relative overflow-hidden">
+        <SectionBackground url="https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=2400&q=80" />
+        <HowItWorksSection />
+      </div>
 
       {/* ══ CAPABILITIES ══════════════════════════════════════════════════════ */}
-      <CapabilitiesSection />
+      <div className="relative overflow-hidden">
+        <SectionBackground url="https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=2400&q=80" />
+        <CapabilitiesSection />
+      </div>
 
       {/* ══ INTEGRATIONS ══════════════════════════════════════════════════════ */}
-      <IntegrationsSection />
+      <div className="relative overflow-hidden">
+        <SectionBackground url="https://images.unsplash.com/photo-1448375240586-882707db888b?w=2400&q=80" />
+        <IntegrationsSection />
+      </div>
 
       {/* ══ TESTIMONIALS ══════════════════════════════════════════════════════ */}
-      <TestimonialsSection />
+      <div className="relative overflow-hidden">
+        <SectionBackground url="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2400&q=80" />
+        <TestimonialsSection />
+      </div>
 
       {/* ══ PRIVACY ═══════════════════════════════════════════════════════════ */}
-      <PrivacySection />
+      <div className="relative overflow-hidden">
+        <SectionBackground url="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=2400&q=80" />
+        <PrivacySection />
+      </div>
 
       {/* ══ FINAL CTA ═════════════════════════════════════════════════════════ */}
       <section
