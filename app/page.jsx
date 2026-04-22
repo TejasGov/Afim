@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform, useMotionValue, useSpring, useInView } from "framer-motion";
+import { motion, animate, useScroll, useTransform, useMotionValue, useSpring, useInView } from "framer-motion";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -77,24 +77,49 @@ const BOT_ROW = [
 
 const TESTIMONIALS = [
   {
-    quote:
-      "Afim is the extension I didn't know I needed. My Claude conversations used to hit a wall — now they keep building on each other.",
+    quote: "Afim is the extension I didn't know I needed. My Claude conversations used to hit a wall — now they keep building on each other.",
     name: "Priya S.",
     role: "Product Lead, Postman",
   },
   {
-    quote:
-      "The conversation graph alone is worth installing. I can finally see the shape of a long debugging session at a glance.",
+    quote: "The conversation graph alone is worth installing. I can finally see the shape of a long debugging session at a glance.",
     name: "Marcus T.",
     role: "Senior Engineer, Afriex",
   },
   {
-    quote:
-      "Elegant, fast, and invisible until you need it. This is how browser tooling should work.",
+    quote: "Elegant, fast, and invisible until you need it. This is how browser tooling should work.",
     name: "Elena R.",
     role: "Founder, Rio Labs",
   },
+  {
+    quote: "I used to re-explain my entire codebase at the start of every session. Afim just remembers. I didn't realise how much time I was losing until it stopped.",
+    name: "David K.",
+    role: "Staff Engineer, Linear",
+  },
+  {
+    quote: "The summary that fires when context runs out is eerily accurate. It captures intent, not just words. That's hard to build.",
+    name: "Sophie L.",
+    role: "AI Research Lead, Capital.com",
+  },
+  {
+    quote: "Finally, an extension that treats AI conversations like real work — with history, structure, and continuity. This is the missing layer.",
+    name: "James O.",
+    role: "Founder, DoorDash Ventures",
+  },
 ];
+
+const SOCIAL_LOGOS = [
+  { label: "OpenAI",    url: "https://cdn.simpleicons.org/openai/white"    },
+  { label: "Anthropic", url: "https://cdn.simpleicons.org/anthropic/white" },
+  { label: "Vercel",    url: "https://cdn.simpleicons.org/vercel/white"    },
+  { label: "Linear",    url: "https://cdn.simpleicons.org/linear/white"    },
+  { label: "Notion",    url: "https://cdn.simpleicons.org/notion/white"    },
+  { label: "GitHub",    url: "https://cdn.simpleicons.org/github/white"    },
+];
+
+// 400px card + 12px left margin + 12px right margin = 424px per slot
+const T_SLOT = 424;
+const T_SINGLE_W = TESTIMONIALS.length * T_SLOT; // 6 * 424 = 2544
 
 const PRIVACY_CARDS = [
   { icon: "🔐", title: "256-bit Encryption", body: "End-to-end encrypted at rest and in transit." },
@@ -1080,6 +1105,141 @@ function IntegrationsSection() {
   );
 }
 
+// ── TESTIMONIALS ─────────────────────────────────────────────────────────────
+
+function TestimonialCard({ quote, name, role, floatDelay }) {
+  const initial = name.charAt(0);
+  return (
+    <motion.div
+      animate={{ y: [0, -4, 0] }}
+      transition={{ duration: 3.8 + floatDelay * 0.6, repeat: Infinity, ease: "easeInOut", delay: floatDelay }}
+      whileHover={{ scale: 1.02, borderColor: "rgba(255,255,255,0.20)" }}
+      style={{ width: 400, flexShrink: 0, margin: "0 12px" }}
+      className="bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-2xl p-8 flex flex-col gap-6 cursor-default"
+    >
+      <p
+        className="text-lg text-white/90 leading-relaxed flex-1"
+        style={{ fontFamily: "var(--font-serif)", fontStyle: "italic" }}
+      >
+        "{quote}"
+      </p>
+      <div className="border-t border-white/10 pt-5 flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-medium text-white/70 select-none"
+          style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 100%)" }}
+        >
+          {initial}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-white/85 leading-tight">{name}</p>
+          <p className="text-xs text-white/50 mt-0.5">{role}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function TestimonialsSection() {
+  const x = useMotionValue(0);
+  const ctrlRef = useRef(null);
+
+  useEffect(() => {
+    ctrlRef.current = animate(x, -T_SINGLE_W, {
+      duration: 40,
+      ease: "linear",
+      repeat: Infinity,
+    });
+    return () => ctrlRef.current?.stop();
+  }, [x]);
+
+  const doubled = [...TESTIMONIALS, ...TESTIMONIALS];
+
+  return (
+    <section className="relative py-28 overflow-hidden">
+      {/* Section header */}
+      <div className="px-6 md:px-14 max-w-6xl mx-auto mb-16">
+        <motion.div
+          {...fadeUp}
+          className="flex items-center gap-2 mb-6"
+        >
+          <span className="w-1 h-1 rounded-full bg-white/50" />
+          <p className="text-[10px] tracking-[0.35em] uppercase text-white/40">Testimonials</p>
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.07 }}
+          className="text-4xl md:text-5xl font-normal text-[#f0ece4] mb-4 leading-[1.08] max-w-xl"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          Trusted by people who live in their AI chats.
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.17 }}
+          className="text-white/35 text-base leading-relaxed"
+        >
+          Early users tell us what it actually feels like.
+        </motion.p>
+      </div>
+
+      {/* Marquee */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.8 }}
+        className="relative"
+        onMouseEnter={() => ctrlRef.current?.pause?.()}
+        onMouseLeave={() => ctrlRef.current?.play?.()}
+        style={{
+          maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+        }}
+      >
+        <motion.div className="flex py-4" style={{ x }}>
+          {doubled.map((t, i) => (
+            <TestimonialCard
+              key={i}
+              {...t}
+              floatDelay={(i % TESTIMONIALS.length) * 0.55}
+            />
+          ))}
+        </motion.div>
+      </motion.div>
+
+      {/* Social proof strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+        className="px-6 md:px-14 max-w-6xl mx-auto mt-16 flex flex-col items-center gap-5"
+      >
+        <p className="text-[10px] tracking-[0.3em] uppercase text-white/25">
+          Trusted by users at
+        </p>
+        <div className="flex items-center gap-8 flex-wrap justify-center">
+          {SOCIAL_LOGOS.map(({ label, url }) => (
+            <img
+              key={label}
+              src={url}
+              alt={label}
+              width={20}
+              height={20}
+              className="opacity-25 hover:opacity-50 transition-opacity duration-200 object-contain select-none"
+              draggable={false}
+            />
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -1300,28 +1460,7 @@ export default function Home() {
       <IntegrationsSection />
 
       {/* ══ TESTIMONIALS ══════════════════════════════════════════════════════ */}
-      <section className="px-6 md:px-14 py-10 max-w-6xl mx-auto">
-        <motion.p {...fadeUp} className="text-xs tracking-[0.3em] uppercase text-[#4a5070] mb-12">
-          What people say
-        </motion.p>
-
-        <div className="grid sm:grid-cols-3 gap-4">
-          {TESTIMONIALS.map((t, i) => (
-            <motion.div
-              key={t.name}
-              {...fadeUp}
-              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.1 }}
-              className="border border-[#1a1e30] bg-[#08091a] rounded-2xl p-8 flex flex-col justify-between gap-8"
-            >
-              <p className="text-sm text-[#6a6860] leading-relaxed italic">"{t.quote}"</p>
-              <div>
-                <p className="text-sm text-[#c0bdb5] font-medium">{t.name}</p>
-                <p className="text-xs text-[#4a4840] mt-0.5">{t.role}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      <TestimonialsSection />
 
       {/* ══ PRIVACY ═══════════════════════════════════════════════════════════ */}
       <section className="px-6 md:px-14 py-28 max-w-6xl mx-auto">
