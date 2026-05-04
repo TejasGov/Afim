@@ -1,5 +1,6 @@
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
+import LenisProvider from "./components/providers/LenisProvider";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -14,15 +15,18 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Afim — Never Lose Context in Long AI Chats",
-  description:
-    "Afim is a Chrome extension that summarizes long AI chat conversations using Claude. Never lose context again.",
+  title: "ΛFIM — Never Lose Context in Long AI Chats",
+  description: "ΛFIM captures every AI conversation — decisions, context, and history — so your chats keep building on each other.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <LenisProvider>
+          {children}
+        </LenisProvider>
+      </body>
     </html>
   );
 }
