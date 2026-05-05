@@ -60,7 +60,7 @@ export default function CtaSection() {
             Be first to try ΛFIM. Free during early access.
           </p>
 
-          <BrutalButton href="#">Add to Chrome</BrutalButton>
+          <BrutalButton href="https://chromewebstore.google.com/detail/afim-%E2%80%93-ai-memory/hdlheaboolkfbbjgagchfhjfmpiefdij?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</BrutalButton>
         </div>
       </section>
 

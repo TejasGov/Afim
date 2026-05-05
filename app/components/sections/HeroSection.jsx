@@ -110,7 +110,7 @@ export default function HeroSection() {
         </p>
 
         <div className="mt-12 flex flex-col md:flex-row gap-6 justify-center items-center">
-          <BrutalButton>Add to Chrome</BrutalButton>
+          <BrutalButton href="https://chromewebstore.google.com/detail/afim-%E2%80%93-ai-memory/hdlheaboolkfbbjgagchfhjfmpiefdij?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</BrutalButton>
           <div className="flex items-center gap-2 font-bold text-white/70 underline decoration-wavy decoration-[#ff5e00] cursor-pointer hover:text-white transition-colors">
             View Demo <MoveRight size={18} />
           </div>
