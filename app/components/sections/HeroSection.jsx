@@ -51,9 +51,9 @@ export default function HeroSection() {
       </div>
 
       {/* Brand Logo */}
-      <div className="absolute top-8 left-8 md:left-14 z-50">
-        <a href="#" className="text-3xl md:text-4xl font-black uppercase tracking-tighter hover:text-[#ccff00] transition-colors duration-300">
-          ΛFIM
+      <div className="absolute top-6 left-6 md:left-10 z-50">
+        <a href="#">
+          <img src="/ΛFIM.png" alt="ΛFIM" className="h-16 md:h-20 w-auto" />
         </a>
       </div>
 
